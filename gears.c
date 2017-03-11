@@ -28,7 +28,9 @@ typedef struct {
   vertex_t *vertices;
   GLshort *indices;
   GLfloat color[4];
+
   int nvertices, nindices;
+
   GLuint vboId; // ID for vertex buffer object
   GLuint iboId; // ID for index buffer object
 
@@ -40,48 +42,45 @@ typedef struct {
   } gear_t;
 /*}}}*/
 /*{{{*/
-typedef struct
-{
-   uint32_t screen_width;
-   uint32_t screen_height;
+typedef struct {
+  uint32_t screen_width;
+  uint32_t screen_height;
 
-  // OpenGL|ES objects
-   EGLDisplay display;
-   EGLSurface surface;
-   EGLContext context;
-   GLenum drawMode;
+ // OpenGL|ES objects
+  EGLDisplay display;
+  EGLSurface surface;
+  EGLContext context;
+  GLenum drawMode;
 
-  // current distance from camera
-   GLfloat viewDist;
-   GLfloat distance_inc;
+ // current distance from camera
+  GLfloat viewDist;
+  GLfloat distance_inc;
 
-  // number of seconds to run the demo
-   uint timeToRun;
-   GLuint texId;
+ // number of seconds to run the demo
+  uint timeToRun;
+  GLuint texId;
 
-   gear_t *gear1, *gear2, *gear3;
+  gear_t *gear1, *gear2, *gear3;
 
   // The location of the shader uniforms
-   GLuint ModelViewProjectionMatrix_location,
-      ModelViewMatrix_location,
-      NormalMatrix_location,
-      LightSourcePosition_location,
-      MaterialColor_location,
-      DiffuseMap_location;
-  // The projection matrix
-   GLfloat ProjectionMatrix[16];
+  GLuint ModelViewProjectionMatrix_location;
+  GLuint ModelViewMatrix_location;
+  GLuint NormalMatrix_location;
+  GLuint LightSourcePosition_location;
+  GLuint MaterialColor_location;
+  GLuint DiffuseMap_location;
 
-  // current angle of the gear
-   GLfloat angle;
-  // the degrees that the angle should change each frame
-   GLfloat angleFrame;
-  // the degrees per second the gear should rotate at
-   GLfloat angleVel;
+ // The projection matrix
+  GLfloat ProjectionMatrix[16];
 
-   // Average Frames Per Second
-   float avgfps;
-   int useVBO;
-   int useVSync;
+  GLfloat angle;
+  GLfloat angleFrame;
+  GLfloat angleVel;
+
+  // Average Frames Per Second
+  float avgfps;
+  int useVBO;
+  int useVSync;
   } CUBE_STATE_T;
 /*}}}*/
 
@@ -154,35 +153,35 @@ static CUBE_STATE_T _state, *state = &_state;
 static GLfloat view_rotx = 25.0, view_roty = 30.0, view_rotz = 0.0;
 
 /*{{{*/
-uint getMilliseconds()
-{
-    struct timespec spec;
+uint getMilliseconds() {
 
-    clock_gettime(CLOCK_REALTIME, &spec);
-
+  struct timespec spec;
+  clock_gettime(CLOCK_REALTIME, &spec);
   return (spec.tv_sec * 1000L + spec.tv_nsec / 1000000L);
-}
+  }
 /*}}}*/
 /*{{{*/
 int _kbhit() {
-    static const int STDIN = 0;
-    static int initialized = 0;
 
-    if (! initialized) {
-        // Use termios to turn off line buffering
-        struct termios term;
-        tcgetattr(STDIN, &term);
-        term.c_lflag &= ~ICANON;
-        tcsetattr(STDIN, TCSANOW, &term);
-        setbuf(stdin, NULL);
-        initialized = 1;
+  static const int STDIN = 0;
+  static int initialized = 0;
+
+  if (!initialized) {
+    // Use termios to turn off line buffering
+    struct termios term;
+    tcgetattr (STDIN, &term);
+    term.c_lflag &= ~ICANON;
+    tcsetattr (STDIN, TCSANOW, &term);
+    setbuf (stdin, NULL);
+    initialized = 1;
     }
 
-    int bytesWaiting;
-    ioctl(STDIN, FIONREAD, &bytesWaiting);
-    //if (bytesWaiting > 0) printf("key count: %d", bytesWaiting);
-    return bytesWaiting;
-}
+  int bytesWaiting;
+  ioctl(STDIN, FIONREAD, &bytesWaiting);
+
+  //if (bytesWaiting > 0) printf("key count: %d", bytesWaiting);
+  return bytesWaiting;
+  }
 /*}}}*/
 
 /*{{{*/
@@ -635,16 +634,14 @@ static void draw_sceneGLES2() {
 
   GLfloat transform[16];
   m4x4_identity(transform);
-
-  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
   /* Translate and rotate the view */
   m4x4_translate (transform, 0.9, 0.0, -state->viewDist);
   m4x4_rotate (transform, view_rotx, 1, 0, 0);
   m4x4_rotate (transform, view_roty, 0, 1, 0);
   m4x4_rotate (transform, view_rotz, 0, 0, 1);
 
-  /* Draw the gears */
+  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
   draw_gearGLES2 (state->gear1, transform, -3.0, -2.0, state->angle);
   draw_gearGLES2 (state->gear2, transform, 3.1, -2.0, -2 * state->angle - 9.0);
   draw_gearGLES2 (state->gear3, transform, -3.1, 4.2, -2 * state->angle - 25.0);
@@ -686,20 +683,18 @@ static void build_gears() {
 }
 /*}}}*/
 /*{{{*/
-static void free_gear (gear_t *gear)
-{
-   if (gear) {
-   if (gear->vboId) {
-     glDeleteBuffers(1, &gear->vboId);
-   }
-   if (gear->iboId) {
-     glDeleteBuffers(1, &gear->iboId);
-   }
-     free(gear->vertices);
-     free(gear->indices);
-     free(gear);
-   }
-}
+static void free_gear (gear_t *gear) {
+
+  if (gear) {
+    if (gear->vboId)
+      glDeleteBuffers(1, &gear->vboId);
+    if (gear->iboId)
+      glDeleteBuffers(1, &gear->iboId);
+    free(gear->vertices);
+    free(gear->indices);
+    free(gear);
+    }
+  }
 /*}}}*/
 
 /*{{{*/
@@ -801,6 +796,7 @@ static void init_egl()
    EGLint num_config;
    result = eglChooseConfig (state->display, attribute_list, &config, 1, &num_config);
    assert (EGL_FALSE != result);
+   printf ("eglChooseConfig %d\n", num_config);
 
    // bind the gles api to this thread - this is default so not required
    result = eglBindAPI (EGL_OPENGL_ES_API);
@@ -817,7 +813,7 @@ static void init_egl()
    assert (state->context!=EGL_NO_CONTEXT);
 
    // create an EGL window surface
-   success = graphics_get_display_size(0 /* LCD */, &state->screen_width, &state->screen_height);
+   success = graphics_get_display_size (0, &state->screen_width, &state->screen_height);
    assert( success >= 0 );
 
    VC_RECT_T dst_rect;
@@ -835,37 +831,36 @@ static void init_egl()
    dispman_display = vc_dispmanx_display_open( 0 /* LCD */);
    dispman_update = vc_dispmanx_update_start( 0 );
 
-   dispman_element = vc_dispmanx_element_add ( dispman_update, dispman_display,
-      0/*layer*/, &dst_rect, 0/*src*/,
-      &src_rect, DISPMANX_PROTECTION_NONE, 0 /*alpha*/, 0/*clamp*/, 0/*transform*/);
+   dispman_element = vc_dispmanx_element_add (dispman_update, dispman_display,
+                                              0/*layer*/, &dst_rect, 0/*src*/,
+                                              &src_rect, DISPMANX_PROTECTION_NONE, 0 /*alpha*/, 0/*clamp*/, 0/*transform*/);
 
    nativewindow.element = dispman_element;
    nativewindow.width = state->screen_width;
    nativewindow.height = state->screen_height;
-   vc_dispmanx_update_submit_sync( dispman_update );
-
-   state->surface = eglCreateWindowSurface( state->display, config, &nativewindow, NULL );
-   assert(state->surface != EGL_NO_SURFACE);
+   vc_dispmanx_update_submit_sync (dispman_update);
+   state->surface = eglCreateWindowSurface (state->display, config, &nativewindow, NULL);
+   assert (state->surface != EGL_NO_SURFACE);
 
    // connect the context to the surface
-   result = eglMakeCurrent(state->display, state->surface, state->surface, state->context);
-   assert(EGL_FALSE != result);
+   result = eglMakeCurrent (state->display, state->surface, state->surface, state->context);
+   assert (EGL_FALSE != result);
 
    // default to no vertical sync but user option may turn it on
-   result = eglSwapInterval(state->display, state->useVSync );
-   assert(EGL_FALSE != result);
+   result = eglSwapInterval (state->display, state->useVSync );
+   assert (EGL_FALSE != result);
 
    // Set background color and clear buffers
-   glClearColor(0.25f, 0.45f, 0.55f, 1.0f);
+   glClearColor (0.25f, 0.45f, 0.55f, 1.0f);
 
    // Enable back face culling.
-   glEnable(GL_CULL_FACE);
-   glFrontFace(GL_CCW);
+   glEnable (GL_CULL_FACE);
+   glFrontFace (GL_CCW);
 
-   printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
-   printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
-   printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
-   printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+   printf ("GL_RENDERER   = %s\n", (char*)glGetString (GL_RENDERER));
+   printf ("GL_VERSION    = %s\n", (char*)glGetString (GL_VERSION));
+   printf ("GL_VENDOR     = %s\n", (char*)glGetString (GL_VENDOR));
+   printf ("GL_EXTENSIONS = %s\n", (char*)glGetString (GL_EXTENSIONS));
 }
 /*}}}*/
 /*{{{*/
