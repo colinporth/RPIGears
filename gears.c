@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define _GNU_SOURCE
 #include <math.h>
 #include <assert.h>
 #include <unistd.h>
@@ -11,10 +10,9 @@
 
 #include "bcm_host.h"
 
-#include "GLES/gl.h"
 #include "GLES2/gl2.h"
 #include "EGL/egl.h"
-#include "EGL/eglext.h"
+//#include "EGL/eglext.h"
 
 #include "RPi_Logo256.c"
 /*}}}*/
@@ -23,7 +21,7 @@ typedef struct {
   GLfloat pos[3];
   GLfloat norm[3];
   GLfloat texCoords[2];
-} vertex_t;
+  } vertex_t;
 /*}}}*/
 /*{{{*/
 typedef struct {
@@ -39,50 +37,52 @@ typedef struct {
   GLvoid *normal_p; // offset or pointer to first normal
   GLvoid *index_p;  // offset or pointer to first index
   GLvoid *texCoords_p;  // offset or pointer to first texcoord
-} gear_t;
+  } gear_t;
 /*}}}*/
 /*{{{*/
 typedef struct
 {
    uint32_t screen_width;
    uint32_t screen_height;
-// OpenGL|ES objects
+
+  // OpenGL|ES objects
    EGLDisplay display;
    EGLSurface surface;
    EGLContext context;
    GLenum drawMode;
-// current distance from camera
+
+  // current distance from camera
    GLfloat viewDist;
    GLfloat distance_inc;
-// number of seconds to run the demo
+
+  // number of seconds to run the demo
    uint timeToRun;
    GLuint texId;
 
    gear_t *gear1, *gear2, *gear3;
 
-// The location of the shader uniforms
+  // The location of the shader uniforms
    GLuint ModelViewProjectionMatrix_location,
       ModelViewMatrix_location,
       NormalMatrix_location,
       LightSourcePosition_location,
       MaterialColor_location,
       DiffuseMap_location;
-// The projection matrix
+  // The projection matrix
    GLfloat ProjectionMatrix[16];
 
-// current angle of the gear
+  // current angle of the gear
    GLfloat angle;
-// the degrees that the angle should change each frame
+  // the degrees that the angle should change each frame
    GLfloat angleFrame;
-// the degrees per second the gear should rotate at
+  // the degrees per second the gear should rotate at
    GLfloat angleVel;
-// Average Frames Per Second
+
+   // Average Frames Per Second
    float avgfps;
    int useVBO;
    int useVSync;
-   int wantInfo;
-
-} CUBE_STATE_T;
+  } CUBE_STATE_T;
 /*}}}*/
 
 /*{{{*/
@@ -475,158 +475,38 @@ static gear_t* gear (const GLfloat inner_radius, const GLfloat outer_radius,
 
   // setup pointers/offsets for draw operations
   if (state->useVBO) {
-  // for VBO use offsets into the buffer object
+    // for VBO use offsets into the buffer object
     gear->vertex_p = 0;
     gear->normal_p = (GLvoid *)sizeof(gear->vertices[0].pos);
     gear->texCoords_p = (GLvoid *)(sizeof(gear->vertices[0].pos) + sizeof(gear->vertices[0].norm));
     gear->index_p = 0;
-  }
+    }
   else {
-  // for Vertex Array use pointers to where the buffer starts
+    // for Vertex Array use pointers to where the buffer starts
     gear->vertex_p = gear->vertices[0].pos;
     gear->normal_p = gear->vertices[0].norm;
     gear->texCoords_p = gear->vertices[0].texCoords;
     gear->index_p = gear->indices;
-  }
+    }
 
   gear->tricount = gear->nindices / 3;
-
   return gear;
 }
 /*}}}*/
 /*{{{*/
-static void init_textures(void)
-{
-   // load a texture buffer but use them on six OGL|ES texture surfaces
-   glGenTextures(1, &state->texId);
+static void init_textures() {
 
-   // setup texture
-   glBindTexture(GL_TEXTURE_2D, state->texId);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, rpi_image.width, rpi_image.height, 0,
-                GL_RGB, GL_UNSIGNED_BYTE, rpi_image.pixel_data);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  // load a texture buffer but use them on six OGL|ES texture surfaces
+  glGenTextures(1, &state->texId);
 
-}
-/*}}}*/
-
-/*{{{*/
-static void update_angleFrame()
-{
-  state->angleFrame = state->angleVel / state->avgfps;
-}
-
-/*}}}*/
-/*{{{*/
-static void update_gear_rotation()
-{
-    /* advance gear rotation for next frame */
-    state->angle += state->angleFrame;
-    if (state->angle > 360.0)
-      state->angle -= 360.0;
-}
-/*}}}*/
-
-/*{{{*/
-static void init_model_projGLES1() {
-
-  // near clipping plane
-  const float nearp = 1.0f;
-  // far clipping plane
-  const float farp = 50.0f;
-  float hht;
-  float hwd;
-
-  glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
-
-  glViewport(0, 0, (GLsizei)state->screen_width, (GLsizei)state->screen_height);
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-  hht = nearp * (float)tan(45.0 / 2.0 / 180.0 * M_PI);
-  hwd = hht * (float)state->screen_width / (float)state->screen_height;
-  // set up the viewing frustum
-  glFrustumf(-hwd, hwd, -hht, hht, nearp, farp);
-
-  glMatrixMode(GL_MODELVIEW);
+  // setup texture
+  glBindTexture (GL_TEXTURE_2D, state->texId);
+  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, rpi_image.width, rpi_image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, rpi_image.pixel_data);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   }
-/*}}}*/
-/*{{{*/
-static void init_scene_GLES1()
-{
-  const GLfloat light_pos[4] = {5.0, 5.0, 10.0, 1.0};
-
-
-  glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-  glEnable(GL_CULL_FACE);
-  glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
-  glEnable(GL_DEPTH_TEST);
-
-  glShadeModel(GL_SMOOTH);
-
-  // vertex and normal array will always be used so do it here once
-  glEnableClientState(GL_NORMAL_ARRAY);
-  glEnableClientState(GL_VERTEX_ARRAY);
-
-  // setup overall texture environment
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-  glEnable(GL_TEXTURE_2D);
-  // setup blend mode for current bound texture unit
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-
-}
-/*}}}*/
-/*{{{*/
-void draw_gearGLES1 (gear_t* gear, GLfloat x, GLfloat y, GLfloat angle) {
-
-  glPushMatrix();
-  glTranslatef(x, y, 0.0);
-  glRotatef(angle, 0.0, 0.0, 1.0);
-
-  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, gear->color);
-
-  if (state->useVBO) {
-  glBindBuffer(GL_ARRAY_BUFFER, gear->vboId);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gear->iboId);
-  }
-
-  glNormalPointer(GL_FLOAT, sizeof(vertex_t), gear->normal_p);
-  glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), gear->vertex_p);
-  glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t), gear->texCoords_p);
-
-  // Bind texture surface to current vertices
-  glBindTexture(GL_TEXTURE_2D, state->texId);
-
-  glDrawElements(state->drawMode, gear->tricount, GL_UNSIGNED_SHORT, gear->index_p);
-  glPopMatrix();
-
-}
-/*}}}*/
-/*{{{*/
-static void draw_sceneGLES1()
-{
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  glPushMatrix();
-
-    glTranslatef(0.9, 0.0, -state->viewDist);
-
-    glRotatef(view_rotx, 1.0, 0.0, 0.0);
-    glRotatef(view_roty, 0.0, 1.0, 0.0);
-    glRotatef(view_rotz, 0.0, 0.0, 1.0);
-
-    draw_gearGLES1(state->gear1, -3.0, -2.0, state->angle);
-    draw_gearGLES1(state->gear2, 3.1, -2.0, -2.0 * state->angle - 9.0);
-    draw_gearGLES1(state->gear3, -3.1, 4.2, -2.0 * state->angle - 25.0);
-
-  glPopMatrix();
-}
 /*}}}*/
 
 /*{{{*/
@@ -689,86 +569,86 @@ static void init_scene_GLES2() {
 /*}}}*/
 /*{{{*/
 static void draw_gearGLES2 (gear_t *gear, GLfloat *transform, GLfloat x, GLfloat y, GLfloat angle) {
-   // The direction of the directional light for the scene */
-   static const GLfloat LightSourcePosition[4] = { 5.0, 5.0, 10.0, 1.0};
 
-   GLfloat model_view[16];
-   GLfloat normal_matrix[16];
-   GLfloat model_view_projection[16];
+  // The direction of the directional light for the scene */
+  static const GLfloat LightSourcePosition[4] = { 5.0, 5.0, 10.0, 1.0};
 
-   /* Translate and rotate the gear */
-   m4x4_copy(model_view, transform);
-   m4x4_translate(model_view, x, y, 0);
-   m4x4_rotate(model_view, angle, 0, 0, 1);
+  GLfloat model_view[16];
+  GLfloat normal_matrix[16];
+  GLfloat model_view_projection[16];
 
-   /* Create and set the ModelViewProjectionMatrix */
-   m4x4_copy(model_view_projection, state->ProjectionMatrix);
-   m4x4_multiply(model_view_projection, model_view);
+  /* Translate and rotate the gear */
+  m4x4_copy (model_view, transform);
+  m4x4_translate (model_view, x, y, 0);
+  m4x4_rotate (model_view, angle, 0, 0, 1);
 
-   glUniformMatrix4fv(state->ModelViewProjectionMatrix_location, 1, GL_FALSE, model_view_projection);
-   glUniformMatrix4fv(state->ModelViewMatrix_location, 1, GL_FALSE, model_view);
+  /* Create and set the ModelViewProjectionMatrix */
+  m4x4_copy (model_view_projection, state->ProjectionMatrix);
+  m4x4_multiply (model_view_projection, model_view);
 
-   /* Set the LightSourcePosition uniform in relation to the object */
-   glUniform4fv(state->LightSourcePosition_location, 1, LightSourcePosition);
-   glUniform1i(state->DiffuseMap_location, 0);
+  glUniformMatrix4fv (state->ModelViewProjectionMatrix_location, 1, GL_FALSE, model_view_projection);
+  glUniformMatrix4fv (state->ModelViewMatrix_location, 1, GL_FALSE, model_view);
 
-   // Create and set the NormalMatrix. It's the inverse transpose of the ModelView matrix.
-   m4x4_copy(normal_matrix, model_view);
-   m4x4_invert(normal_matrix);
-   m4x4_transpose(normal_matrix);
-   glUniformMatrix4fv(state->NormalMatrix_location, 1, GL_FALSE, normal_matrix);
+  /* Set the LightSourcePosition uniform in relation to the object */
+  glUniform4fv (state->LightSourcePosition_location, 1, LightSourcePosition);
+  glUniform1i (state->DiffuseMap_location, 0);
 
-   /* Set the gear color */
-   glUniform4fv(state->MaterialColor_location, 1, gear->color);
+  // Create and set the NormalMatrix. It's the inverse transpose of the ModelView matrix.
+  m4x4_copy (normal_matrix, model_view);
+  m4x4_invert (normal_matrix);
+  m4x4_transpose (normal_matrix);
+  glUniformMatrix4fv (state->NormalMatrix_location, 1, GL_FALSE, normal_matrix);
 
-   if (state->useVBO) {
-     glBindBuffer(GL_ARRAY_BUFFER, gear->vboId);
-     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gear->iboId);
-   }
+  /* Set the gear color */
+  glUniform4fv (state->MaterialColor_location, 1, gear->color);
+  if (state->useVBO) {
+    glBindBuffer (GL_ARRAY_BUFFER, gear->vboId);
+    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, gear->iboId);
+    }
 
-   /* Set up the position of the attributes in the vertex buffer object */
-   // setup where vertex data is
-   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), gear->vertex_p);
-   // setup where normal data is
-   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), gear->normal_p);
-   // setup where uv data is
-   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), gear->texCoords_p);
+  /* Set up the position of the attributes in the vertex buffer object */
+  // setup where vertex data is
+  glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), gear->vertex_p);
+  // setup where normal data is
+  glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), gear->normal_p);
+  // setup where uv data is
+  glVertexAttribPointer (2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), gear->texCoords_p);
 
-   /* Enable the attributes */
-   glEnableVertexAttribArray(0);
-   glEnableVertexAttribArray(1);
-   glEnableVertexAttribArray(2);
+  /* Enable the attributes */
+  glEnableVertexAttribArray (0);
+  glEnableVertexAttribArray (1);
+  glEnableVertexAttribArray (2);
 
-   // Bind texture surface to current vertices
-   glBindTexture(GL_TEXTURE_2D, state->texId);
+  // Bind texture surface to current vertices
+  glBindTexture (GL_TEXTURE_2D, state->texId);
 
-   glDrawElements(state->drawMode, gear->tricount, GL_UNSIGNED_SHORT, gear->index_p);
+  glDrawElements (state->drawMode, gear->tricount, GL_UNSIGNED_SHORT, gear->index_p);
 
-   /* Disable the attributes */
-   glDisableVertexAttribArray(2);
-   glDisableVertexAttribArray(1);
-   glDisableVertexAttribArray(0);
+  /* Disable the attributes */
+  glDisableVertexAttribArray (2);
+  glDisableVertexAttribArray (1);
+  glDisableVertexAttribArray (0);
 }
 /*}}}*/
 /*{{{*/
-static void draw_sceneGLES2()
-{
-   GLfloat transform[16];
-   m4x4_identity(transform);
+static void draw_sceneGLES2() {
 
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  GLfloat transform[16];
+  m4x4_identity(transform);
 
-   /* Translate and rotate the view */
-   m4x4_translate(transform, 0.9, 0.0, -state->viewDist);
-   m4x4_rotate(transform, view_rotx, 1, 0, 0);
-   m4x4_rotate(transform, view_roty, 0, 1, 0);
-   m4x4_rotate(transform, view_rotz, 0, 0, 1);
+  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-   /* Draw the gears */
-   draw_gearGLES2(state->gear1, transform, -3.0, -2.0, state->angle);
-   draw_gearGLES2(state->gear2, transform, 3.1, -2.0, -2 * state->angle - 9.0);
-   draw_gearGLES2(state->gear3, transform, -3.1, 4.2, -2 * state->angle - 25.0);
-}
+  /* Translate and rotate the view */
+  m4x4_translate (transform, 0.9, 0.0, -state->viewDist);
+  m4x4_rotate (transform, view_rotx, 1, 0, 0);
+  m4x4_rotate (transform, view_roty, 0, 1, 0);
+  m4x4_rotate (transform, view_rotz, 0, 0, 1);
+
+  /* Draw the gears */
+  draw_gearGLES2 (state->gear1, transform, -3.0, -2.0, state->angle);
+  draw_gearGLES2 (state->gear2, transform, 3.1, -2.0, -2 * state->angle - 9.0);
+  draw_gearGLES2 (state->gear3, transform, -3.1, 4.2, -2 * state->angle - 25.0);
+  }
 /*}}}*/
 
 /*{{{*/
@@ -793,16 +673,49 @@ static void build_gears() {
   const GLfloat blue[4] = {0.3, 0.3, 0.9, 1.0};
 
   /* make the meshes for the gears */
-  state->gear1 = gear(1.0, 4.0, 2.5, 20, 0.7, red);
-  state->gear2 = gear(0.5, 2.0, 3.0, 10, 0.7, green);
-  state->gear3 = gear(1.3, 2.0, 1.5, 10, 0.7, blue);
+  state->gear1 = gear (1.0, 4.0, 2.5, 20, 0.7, red);
+  state->gear2 = gear (0.5, 2.0, 3.0, 10, 0.7, green);
+  state->gear3 = gear (1.3, 2.0, 1.5, 10, 0.7, blue);
 
   // if VBO enabled then set them up for each gear
   if (state->useVBO) {
-    make_gear_vbo(state->gear1);
-    make_gear_vbo(state->gear2);
-    make_gear_vbo(state->gear3);
+    make_gear_vbo (state->gear1);
+    make_gear_vbo (state->gear2);
+    make_gear_vbo (state->gear3);
     }
+}
+/*}}}*/
+/*{{{*/
+static void free_gear (gear_t *gear)
+{
+   if (gear) {
+   if (gear->vboId) {
+     glDeleteBuffers(1, &gear->vboId);
+   }
+   if (gear->iboId) {
+     glDeleteBuffers(1, &gear->iboId);
+   }
+     free(gear->vertices);
+     free(gear->indices);
+     free(gear);
+   }
+}
+/*}}}*/
+
+/*{{{*/
+static void update_angleFrame()
+{
+  state->angleFrame = state->angleVel / state->avgfps;
+}
+
+/*}}}*/
+/*{{{*/
+static void update_gear_rotation()
+{
+    /* advance gear rotation for next frame */
+    state->angle += state->angleFrame;
+    if (state->angle > 360.0)
+      state->angle -= 360.0;
 }
 /*}}}*/
 /*{{{*/
@@ -844,28 +757,12 @@ static void run_gears() {
 
     // once in a while check if the user hit the keyboard stop the program if a key was hit
     if (active-- == 1) {
-      if (_kbhit()) 
+      if (_kbhit())
         active = 0;
-      else 
+      else
         active = 30;
     }
   }
-}
-/*}}}*/
-/*{{{*/
-static void free_gear (gear_t *gear)
-{
-   if (gear) {
-   if (gear->vboId) {
-     glDeleteBuffers(1, &gear->vboId);
-   }
-   if (gear->iboId) {
-     glDeleteBuffers(1, &gear->iboId);
-   }
-     free(gear->vertices);
-     free(gear->indices);
-     free(gear);
-   }
 }
 /*}}}*/
 
@@ -1011,10 +908,7 @@ static void setup_user_options (int argc, char *argv[])
   state->drawMode = GL_TRIANGLES;
 
   for ( i=1; i<argc; i++ ) {
-    if (strcmp(argv[i], "-info")==0) {
-    state->wantInfo = 1;
-    }
-    else if ( strcmp(argv[i], "-exit")==0) {
+    if ( strcmp(argv[i], "-exit")==0) {
       state->timeToRun = 30000;
       printf("Auto Exit after %i seconds.\n", state->timeToRun/1000 );
     }
