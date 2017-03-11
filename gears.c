@@ -18,8 +18,6 @@
 
 #include "RPi_Logo256.c"
 /*}}}*/
-#define FRAMES 30
-#define check() assert(glGetError() == 0)
 /*{{{*/
 typedef struct {
   GLfloat pos[3];
@@ -81,7 +79,6 @@ typedef struct
 // Average Frames Per Second
    float avgfps;
    int useVBO;
-   int useGLES2;
    int useVSync;
    int wantInfo;
 
@@ -533,31 +530,29 @@ static void update_gear_rotation()
 /*}}}*/
 
 /*{{{*/
-static void init_model_projGLES1()
-{
-   // near clipping plane
-   const float nearp = 1.0f;
-   // far clipping plane
-   const float farp = 50.0f;
-   float hht;
-   float hwd;
+static void init_model_projGLES1() {
 
+  // near clipping plane
+  const float nearp = 1.0f;
+  // far clipping plane
+  const float farp = 50.0f;
+  float hht;
+  float hwd;
 
-   glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
+  glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
 
-   glViewport(0, 0, (GLsizei)state->screen_width, (GLsizei)state->screen_height);
+  glViewport(0, 0, (GLsizei)state->screen_width, (GLsizei)state->screen_height);
 
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
 
-   hht = nearp * (float)tan(45.0 / 2.0 / 180.0 * M_PI);
-   hwd = hht * (float)state->screen_width / (float)state->screen_height;
-   // set up the viewing frustum
-   glFrustumf(-hwd, hwd, -hht, hht, nearp, farp);
+  hht = nearp * (float)tan(45.0 / 2.0 / 180.0 * M_PI);
+  hwd = hht * (float)state->screen_width / (float)state->screen_height;
+  // set up the viewing frustum
+  glFrustumf(-hwd, hwd, -hht, hht, nearp, farp);
 
-   glMatrixMode(GL_MODELVIEW);
-
-}
+  glMatrixMode(GL_MODELVIEW);
+  }
 /*}}}*/
 /*{{{*/
 static void init_scene_GLES1()
@@ -588,8 +583,7 @@ static void init_scene_GLES1()
 }
 /*}}}*/
 /*{{{*/
-void draw_gearGLES1 (gear_t* gear, GLfloat x, GLfloat y, GLfloat angle)
-{
+void draw_gearGLES1 (gear_t* gear, GLfloat x, GLfloat y, GLfloat angle) {
 
   glPushMatrix();
   glTranslatef(x, y, 0.0);
@@ -609,8 +603,7 @@ void draw_gearGLES1 (gear_t* gear, GLfloat x, GLfloat y, GLfloat angle)
   // Bind texture surface to current vertices
   glBindTexture(GL_TEXTURE_2D, state->texId);
 
-  glDrawElements(state->drawMode, gear->tricount, GL_UNSIGNED_SHORT,
-                   gear->index_p);
+  glDrawElements(state->drawMode, gear->tricount, GL_UNSIGNED_SHORT, gear->index_p);
   glPopMatrix();
 
 }
@@ -637,21 +630,19 @@ static void draw_sceneGLES1()
 /*}}}*/
 
 /*{{{*/
-static void init_model_projGLES2()
-{
-   /* Update the projection matrix */
-   m4x4_perspective(state->ProjectionMatrix, 45.0, (float)state->screen_width / (float)state->screen_height, 1.0, 50.0);
-   glViewport(0, 0, (GLsizei)state->screen_width, (GLsizei)state->screen_height);
+static void init_model_projGLES2() {
 
-}
+  /* Update the projection matrix */
+  m4x4_perspective(state->ProjectionMatrix, 45.0, (float)state->screen_width / (float)state->screen_height, 1.0, 50.0);
+  glViewport(0, 0, (GLsizei)state->screen_width, (GLsizei)state->screen_height);
+  }
 /*}}}*/
 /*{{{*/
-static void init_scene_GLES2()
-{
+static void init_scene_GLES2() {
+
    GLuint v, f, program;
    const char *p;
    char msg[512];
-
 
    glEnable(GL_CULL_FACE);
    glEnable(GL_DEPTH_TEST);
@@ -694,13 +685,10 @@ static void init_scene_GLES2()
    state->LightSourcePosition_location = glGetUniformLocation(program, "LightSourcePosition");
    state->MaterialColor_location = glGetUniformLocation(program, "MaterialColor");
    state->DiffuseMap_location = glGetUniformLocation(program, "DiffuseMap");
-
 }
 /*}}}*/
 /*{{{*/
-static void draw_gearGLES2 (gear_t *gear, GLfloat *transform,
-      GLfloat x, GLfloat y, GLfloat angle)
-{
+static void draw_gearGLES2 (gear_t *gear, GLfloat *transform, GLfloat x, GLfloat y, GLfloat angle) {
    // The direction of the directional light for the scene */
    static const GLfloat LightSourcePosition[4] = { 5.0, 5.0, 10.0, 1.0};
 
@@ -717,19 +705,14 @@ static void draw_gearGLES2 (gear_t *gear, GLfloat *transform,
    m4x4_copy(model_view_projection, state->ProjectionMatrix);
    m4x4_multiply(model_view_projection, model_view);
 
-   glUniformMatrix4fv(state->ModelViewProjectionMatrix_location, 1, GL_FALSE,
-                      model_view_projection);
-   glUniformMatrix4fv(state->ModelViewMatrix_location, 1, GL_FALSE,
-                      model_view);
+   glUniformMatrix4fv(state->ModelViewProjectionMatrix_location, 1, GL_FALSE, model_view_projection);
+   glUniformMatrix4fv(state->ModelViewMatrix_location, 1, GL_FALSE, model_view);
+
    /* Set the LightSourcePosition uniform in relation to the object */
    glUniform4fv(state->LightSourcePosition_location, 1, LightSourcePosition);
-
    glUniform1i(state->DiffuseMap_location, 0);
 
-   /*
-    * Create and set the NormalMatrix. It's the inverse transpose of the
-    * ModelView matrix.
-    */
+   // Create and set the NormalMatrix. It's the inverse transpose of the ModelView matrix.
    m4x4_copy(normal_matrix, model_view);
    m4x4_invert(normal_matrix);
    m4x4_transpose(normal_matrix);
@@ -745,14 +728,11 @@ static void draw_gearGLES2 (gear_t *gear, GLfloat *transform,
 
    /* Set up the position of the attributes in the vertex buffer object */
    // setup where vertex data is
-   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-         sizeof(vertex_t), gear->vertex_p);
+   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), gear->vertex_p);
    // setup where normal data is
-   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
-         sizeof(vertex_t), gear->normal_p);
+   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), gear->normal_p);
    // setup where uv data is
-   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,
-         sizeof(vertex_t), gear->texCoords_p);
+   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), gear->texCoords_p);
 
    /* Enable the attributes */
    glEnableVertexAttribArray(0);
@@ -762,14 +742,12 @@ static void draw_gearGLES2 (gear_t *gear, GLfloat *transform,
    // Bind texture surface to current vertices
    glBindTexture(GL_TEXTURE_2D, state->texId);
 
-   glDrawElements(state->drawMode, gear->tricount, GL_UNSIGNED_SHORT,
-                   gear->index_p);
+   glDrawElements(state->drawMode, gear->tricount, GL_UNSIGNED_SHORT, gear->index_p);
 
    /* Disable the attributes */
    glDisableVertexAttribArray(2);
    glDisableVertexAttribArray(1);
    glDisableVertexAttribArray(0);
-
 }
 /*}}}*/
 /*{{{*/
@@ -794,23 +772,22 @@ static void draw_sceneGLES2()
 /*}}}*/
 
 /*{{{*/
-static void make_gear_vbo (gear_t *gear)
-{
-   // setup the vertex buffer that will hold the vertices and normals
-   glGenBuffers(1, &gear->vboId);
-   glBindBuffer(GL_ARRAY_BUFFER, gear->vboId);
-   glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_t) * gear->nvertices, gear->vertices, GL_STATIC_DRAW);
+static void make_gear_vbo (gear_t *gear) {
 
-   // setup the index buffer that will hold the indices
-   glGenBuffers(1, &gear->iboId);
-   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gear->iboId);
-   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLshort) * gear->nindices, gear->indices, GL_STATIC_DRAW);
+  // setup the vertex buffer that will hold the vertices and normals
+  glGenBuffers (1, &gear->vboId);
+  glBindBuffer (GL_ARRAY_BUFFER, gear->vboId);
+  glBufferData (GL_ARRAY_BUFFER, sizeof(vertex_t) * gear->nvertices, gear->vertices, GL_STATIC_DRAW);
 
-}
+  // setup the index buffer that will hold the indices
+  glGenBuffers (1, &gear->iboId);
+  glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, gear->iboId);
+  glBufferData (GL_ELEMENT_ARRAY_BUFFER, sizeof(GLshort) * gear->nindices, gear->indices, GL_STATIC_DRAW);
+  }
 /*}}}*/
 /*{{{*/
-static void build_gears()
-{
+static void build_gears() {
+
   const GLfloat red[4] = {0.9, 0.3, 0.3, 1.0};
   const GLfloat green[4] = {0.3, 0.9, 0.3, 1.0};
   const GLfloat blue[4] = {0.3, 0.3, 0.9, 1.0};
@@ -825,68 +802,53 @@ static void build_gears()
     make_gear_vbo(state->gear1);
     make_gear_vbo(state->gear2);
     make_gear_vbo(state->gear3);
-  }
-
-
+    }
 }
 /*}}}*/
 /*{{{*/
-static void run_gears()
-{
+static void run_gears() {
+
   const uint ttr = state->timeToRun;
   const uint st = getMilliseconds();
   uint ct = st;
   uint prevct = ct, seconds = st;
   float dt;
   float fps;
-  int   frames = 0;
-  int   active = FRAMES;
+  int frames = 0;
+  int active = 30;
 
-  // keep doing the loop while no key hit and ttr
-  // is either 0 or time since start is less than time to run (ttr)
-  while ( active && ((ttr == 0) || ((ct - st) < ttr)) )
-  {
+  // keep doing the loop while no key hit and ttr  is either 0 or time since start is less than time to run (ttr)
+  while ( active && ((ttr == 0) || ((ct - st) < ttr)) ) {
     ct = getMilliseconds();
-
     frames++;
     dt = (float)(ct - seconds)/1000.0f;
     // adjust angleFrame each half second
     if ((ct - prevct) > 500) {
-    if (dt > 0.0f) {
+      if (dt > 0.0f) {
         state->avgfps = state->avgfps * 0.4f + (float)frames / dt * 0.6f;
-      update_angleFrame();
-    }
-    prevct = ct;
-  }
+        update_angleFrame();
+        }
+      prevct = ct;
+      }
 
     update_gear_rotation();
-
-    // draw the scene for the next new frame
-    if (state->useGLES2) {
     draw_sceneGLES2();
-  }
-  else {
-      draw_sceneGLES1();
-    }
+    eglSwapBuffers (state->display, state->surface);
 
-    // swap the current buffer for the next new frame
-    eglSwapBuffers(state->display, state->surface);
-
-    if (dt >= 1.0f)
-    {
+    if (dt >= 1.0f) {
       fps = (float)frames  / dt;
       printf("%d frames in %3.1f seconds = %3.1f FPS\n", frames, dt, fps);
       seconds = ct;
       frames = 0;
-    }
-    // once in a while check if the user hit the keyboard
-    // stop the program if a key was hit
-    if (active-- == 1)
-    {
-      if (_kbhit()) active = 0;
-      else active = FRAMES;
-    }
+      }
 
+    // once in a while check if the user hit the keyboard stop the program if a key was hit
+    if (active-- == 1) {
+      if (_kbhit()) 
+        active = 0;
+      else 
+        active = 30;
+    }
   }
 }
 /*}}}*/
@@ -912,18 +874,23 @@ static void init_egl()
 {
    int32_t success = 0;
    EGLBoolean result;
-   EGLint num_config;
 
    static EGL_DISPMANX_WINDOW_T nativewindow;
-
    DISPMANX_ELEMENT_HANDLE_T dispman_element;
    DISPMANX_DISPLAY_HANDLE_T dispman_display;
    DISPMANX_UPDATE_HANDLE_T dispman_update;
-   VC_RECT_T dst_rect;
-   VC_RECT_T src_rect;
 
-   static const EGLint attribute_list[] =
-   {
+   // get an EGL display connection
+   state->display = eglGetDisplay (EGL_DEFAULT_DISPLAY);
+   assert (state->display != EGL_NO_DISPLAY);
+
+   // initialize the EGL display connection
+   result = eglInitialize (state->display, NULL, NULL);
+   assert (EGL_FALSE != result);
+
+   // get an appropriate EGL frame buffer configuration
+   /*{{{*/
+   const EGLint attribute_list[] = {
       EGL_RED_SIZE, 8,
       EGL_GREEN_SIZE, 8,
       EGL_BLUE_SIZE, 8,
@@ -932,46 +899,37 @@ static void init_egl()
       EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
       EGL_NONE
    };
-
-  static EGLint context_attributes[] =
-   {
-      EGL_CONTEXT_CLIENT_VERSION, 1,
-      EGL_NONE
-   };
-
+   /*}}}*/
    EGLConfig config;
-
-   // get an EGL display connection
-   state->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-   assert(state->display!=EGL_NO_DISPLAY);
-
-   // initialize the EGL display connection
-   result = eglInitialize(state->display, NULL, NULL);
-   assert(EGL_FALSE != result);
-
-   // get an appropriate EGL frame buffer configuration
-   result = eglChooseConfig(state->display, attribute_list, &config, 1, &num_config);
-   assert(EGL_FALSE != result);
+   EGLint num_config;
+   result = eglChooseConfig (state->display, attribute_list, &config, 1, &num_config);
+   assert (EGL_FALSE != result);
 
    // bind the gles api to this thread - this is default so not required
-   result = eglBindAPI(EGL_OPENGL_ES_API);
-   assert(EGL_FALSE != result);
+   result = eglBindAPI (EGL_OPENGL_ES_API);
+   assert (EGL_FALSE != result);
 
    // create an EGL rendering context
-   // select es 1.x or 2.x based on user option
-   context_attributes[1] = state->useGLES2 + 1;
-   state->context = eglCreateContext(state->display, config, EGL_NO_CONTEXT, context_attributes);
-   assert(state->context!=EGL_NO_CONTEXT);
+   /*{{{*/
+   EGLint context_attributes[] = {
+      EGL_CONTEXT_CLIENT_VERSION, 2,
+      EGL_NONE
+   };
+   /*}}}*/
+   state->context = eglCreateContext (state->display, config, EGL_NO_CONTEXT, context_attributes);
+   assert (state->context!=EGL_NO_CONTEXT);
 
    // create an EGL window surface
    success = graphics_get_display_size(0 /* LCD */, &state->screen_width, &state->screen_height);
    assert( success >= 0 );
 
+   VC_RECT_T dst_rect;
    dst_rect.x = 0;
    dst_rect.y = 0;
    dst_rect.width = state->screen_width;
    dst_rect.height = state->screen_height;
 
+   VC_RECT_T src_rect;
    src_rect.x = 0;
    src_rect.y = 0;
    src_rect.width = state->screen_width << 16;
@@ -1007,21 +965,16 @@ static void init_egl()
    glEnable(GL_CULL_FACE);
    glFrontFace(GL_CCW);
 
-      printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
-      printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
-      printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
-      printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+   printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
+   printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
+   printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
+   printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
 }
 /*}}}*/
 /*{{{*/
 static void exit_func()
 // Function to be passed to atexit().
 {
-   if (!state->useGLES2) {
-     glDisableClientState(GL_NORMAL_ARRAY);
-     glDisableClientState(GL_VERTEX_ARRAY);
-   }
-
    glBindBuffer(GL_ARRAY_BUFFER, 0);
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -1074,10 +1027,6 @@ static void setup_user_options (int argc, char *argv[])
     // use VBO instead of Vertex Array
     state->useVBO = 1;
   }
-    else if ( strcmp(argv[i], "-gles2")==0) {
-    // use opengl es 2.0
-    state->useGLES2 = 1;
-  }
     else if ( strcmp(argv[i], "-line")==0) {
     // use line mode draw ie wire mesh
     state->drawMode = GL_LINES;
@@ -1104,15 +1053,8 @@ int main (int argc, char *argv[])
    init_textures();
    build_gears();
 
-   // setup the scene based on rendering mode
-   if (state->useGLES2) {
-     init_scene_GLES2();
-     init_model_projGLES2();
-     }
-   else { // using gles1
-     init_scene_GLES1();
-     init_model_projGLES1();
-     }
+   init_scene_GLES2();
+   init_model_projGLES2();
 
    // animate the gears
    run_gears();
