@@ -91,67 +91,67 @@ typedef struct
 /*{{{*/
 // vertex shader for gles2
 static const char vertex_shader[] =
-"attribute vec3 position;\n"
-"attribute vec3 normal;\n"
-"attribute vec2 uv;\n"
-"\n"
-"uniform mat4 ModelViewMatrix;\n"
-"uniform mat4 ModelViewProjectionMatrix;\n"
-"uniform mat4 NormalMatrix;\n"
-"// light position in view space\n"
-"uniform vec4 LightSourcePosition;\n"
-"\n"
-"varying lowp vec3 L;\n"
-"varying lowp vec3 N;\n"
-"varying lowp vec3 H;\n"
-"varying lowp vec2 oUV;\n"
-"\n"
-"void main(void)\n"
-"{\n"
-"    vec4 pos = vec4(position, 1.0);\n"
-"   // None of the vectors are normalized until in the fragment shader\n"
-"// Calculate the normal vector for this vertex, in view space (\n"
-"// multiply by NormalMatrix)\n"
-"    N = vec3(NormalMatrix * vec4(normal, 0.0));\n"
-"    // Calculate the light vector for this vertex\n"
-"    L = vec3(LightSourcePosition - (ModelViewMatrix * pos));\n"
-"    // Calculate the view vector\n"
-"    lowp vec3 V = vec3(ModelViewMatrix * pos);\n"
-"// calculate half angle\n"
-"    H = L - V;\n"
-"\n"
-"    oUV = uv;\n"
-"    // Transform the position to clip coordinates\n"
-"    gl_Position = ModelViewProjectionMatrix * pos;\n"
-"}";
+  "attribute vec3 position;\n"
+  "attribute vec3 normal;\n"
+  "attribute vec2 uv;\n"
+  "\n"
+  "uniform mat4 ModelViewMatrix;\n"
+  "uniform mat4 ModelViewProjectionMatrix;\n"
+  "uniform mat4 NormalMatrix;\n"
+  "// light position in view space\n"
+  "uniform vec4 LightSourcePosition;\n"
+  "\n"
+  "varying lowp vec3 L;\n"
+  "varying lowp vec3 N;\n"
+  "varying lowp vec3 H;\n"
+  "varying lowp vec2 oUV;\n"
+  "\n"
+  "void main(void)\n"
+  "{\n"
+  "    vec4 pos = vec4(position, 1.0);\n"
+  "   // None of the vectors are normalized until in the fragment shader\n"
+  "// Calculate the normal vector for this vertex, in view space (\n"
+  "// multiply by NormalMatrix)\n"
+  "    N = vec3(NormalMatrix * vec4(normal, 0.0));\n"
+  "    // Calculate the light vector for this vertex\n"
+  "    L = vec3(LightSourcePosition - (ModelViewMatrix * pos));\n"
+  "    // Calculate the view vector\n"
+  "    lowp vec3 V = vec3(ModelViewMatrix * pos);\n"
+  "// calculate half angle\n"
+  "    H = L - V;\n"
+  "\n"
+  "    oUV = uv;\n"
+  "    // Transform the position to clip coordinates\n"
+  "    gl_Position = ModelViewProjectionMatrix * pos;\n"
+  "}";
 /*}}}*/
 /*{{{*/
 // fragment shader for gles2
 static const char fragment_shader[] =
-"\n"
-"uniform vec4 MaterialColor;\n"
-"uniform sampler2D DiffuseMap;\n"
-"\n"
-"varying lowp vec3 L;\n"
-"varying lowp vec3 N;\n"
-"varying lowp vec3 H;\n"
-"varying lowp vec2 oUV;\n"
-"\n"
-"void main(void)\n"
-"{\n"
-"    lowp vec3 l = normalize(L);\n"
-"    lowp vec3 n = normalize(N);\n"
-"    lowp vec3 h = normalize(H);\n"
-"\n"
-"    lowp float diffuse = max(dot(l, n), 0.0);\n"
-"    // get bump map vector, again expand from range-compressed\n"
-"    vec4 diffCol = texture2D(DiffuseMap, oUV);\n"
-"    // modulate diffuseMap with base material color\n"
-"    gl_FragColor = vec4(MaterialColor.xyz * diffuse, 1.0) * diffCol;\n"
-" //   add  specular\n"
-"    // materials that have more red in them are shinnier\n"
-"    gl_FragColor += pow(max(0.0, dot(n, h)), 7.0) * diffCol.r;\n"
-"}";
+  "\n"
+  "uniform vec4 MaterialColor;\n"
+  "uniform sampler2D DiffuseMap;\n"
+  "\n"
+  "varying lowp vec3 L;\n"
+  "varying lowp vec3 N;\n"
+  "varying lowp vec3 H;\n"
+  "varying lowp vec2 oUV;\n"
+  "\n"
+  "void main(void)\n"
+  "{\n"
+  "    lowp vec3 l = normalize(L);\n"
+  "    lowp vec3 n = normalize(N);\n"
+  "    lowp vec3 h = normalize(H);\n"
+  "\n"
+  "    lowp float diffuse = max(dot(l, n), 0.0);\n"
+  "    // get bump map vector, again expand from range-compressed\n"
+  "    vec4 diffCol = texture2D(DiffuseMap, oUV);\n"
+  "    // modulate diffuseMap with base material color\n"
+  "    gl_FragColor = vec4(MaterialColor.xyz * diffuse, 1.0) * diffCol;\n"
+  " //   add  specular\n"
+  "    // materials that have more red in them are shinnier\n"
+  "    gl_FragColor += pow(max(0.0, dot(n, h)), 7.0) * diffCol.r;\n"
+  "}";
 /*}}}*/
 static CUBE_STATE_T _state, *state = &_state;
 static GLfloat view_rotx = 25.0, view_roty = 30.0, view_rotz = 0.0;
@@ -167,7 +167,7 @@ uint getMilliseconds()
 }
 /*}}}*/
 /*{{{*/
-int _kbhit(void) {
+int _kbhit() {
     static const int STDIN = 0;
     static int initialized = 0;
 
@@ -189,13 +189,13 @@ int _kbhit(void) {
 /*}}}*/
 
 /*{{{*/
-static void m4x4_copy(GLfloat *md, const GLfloat *ms)
+static void m4x4_copy (GLfloat *md, const GLfloat *ms)
 {
    memcpy(md, ms, sizeof(GLfloat) * 16);
 }
 /*}}}*/
 /*{{{*/
-static void m4x4_multiply(GLfloat *m, const GLfloat *n)
+static void m4x4_multiply( GLfloat *m, const GLfloat *n)
 {
    GLfloat tmp[16];
    const GLfloat *row, *column;
@@ -214,7 +214,7 @@ static void m4x4_multiply(GLfloat *m, const GLfloat *n)
 }
 /*}}}*/
 /*{{{*/
-static void m4x4_rotate(GLfloat *m, GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
+static void m4x4_rotate (GLfloat *m, GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
    float s, c;
 
@@ -234,7 +234,7 @@ static void m4x4_rotate(GLfloat *m, GLfloat angle, GLfloat x, GLfloat y, GLfloat
 
 /*}}}*/
 /*{{{*/
-static void m4x4_translate(GLfloat *m, GLfloat x, GLfloat y, GLfloat z)
+static void m4x4_translate (GLfloat *m, GLfloat x, GLfloat y, GLfloat z)
 {
    GLfloat t[16] = { 1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  x, y, z, 1 };
 
@@ -242,7 +242,7 @@ static void m4x4_translate(GLfloat *m, GLfloat x, GLfloat y, GLfloat z)
 }
 /*}}}*/
 /*{{{*/
-static void m4x4_identity(GLfloat *m)
+static void m4x4_identity (GLfloat *m)
 {
    static const GLfloat t[16] = {
       1.0, 0.0, 0.0, 0.0,
@@ -255,7 +255,7 @@ static void m4x4_identity(GLfloat *m)
 }
 /*}}}*/
 /*{{{*/
-static void m4x4_transpose(GLfloat *m)
+static void m4x4_transpose (GLfloat *m)
 {
    const GLfloat t[16] = {
       m[0], m[4], m[8],  m[12],
@@ -267,7 +267,7 @@ static void m4x4_transpose(GLfloat *m)
 }
 /*}}}*/
 /*{{{*/
-static void m4x4_invert(GLfloat *m)
+static void m4x4_invert (GLfloat *m)
 {
    GLfloat t[16];
    m4x4_identity(t);
@@ -288,7 +288,7 @@ static void m4x4_invert(GLfloat *m)
 /*}}}*/
 /*{{{*/
 
-void m4x4_perspective(GLfloat *m, GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar)
+void m4x4_perspective (GLfloat *m, GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar)
 {
    GLfloat tmp[16];
    m4x4_identity(tmp);
@@ -317,7 +317,7 @@ void m4x4_perspective(GLfloat *m, GLfloat fovy, GLfloat aspect, GLfloat zNear, G
 /*}}}*/
 
 /*{{{*/
-static gear_t* gear( const GLfloat inner_radius, const GLfloat outer_radius,
+static gear_t* gear (const GLfloat inner_radius, const GLfloat outer_radius,
                      const GLfloat width, const GLint teeth,
                      const GLfloat tooth_depth, const GLfloat color[])
 {
@@ -514,17 +514,26 @@ static void init_textures(void)
 
 }
 /*}}}*/
-/*{{{*/
-static void init_model_projGLES2(void)
-{
-   /* Update the projection matrix */
-   m4x4_perspective(state->ProjectionMatrix, 45.0, (float)state->screen_width / (float)state->screen_height, 1.0, 50.0);
-   glViewport(0, 0, (GLsizei)state->screen_width, (GLsizei)state->screen_height);
 
+/*{{{*/
+static void update_angleFrame()
+{
+  state->angleFrame = state->angleVel / state->avgfps;
 }
+
 /*}}}*/
 /*{{{*/
-static void init_model_projGLES1(void)
+static void update_gear_rotation()
+{
+    /* advance gear rotation for next frame */
+    state->angle += state->angleFrame;
+    if (state->angle > 360.0)
+      state->angle -= 360.0;
+}
+/*}}}*/
+
+/*{{{*/
+static void init_model_projGLES1()
 {
    // near clipping plane
    const float nearp = 1.0f;
@@ -550,9 +559,94 @@ static void init_model_projGLES1(void)
 
 }
 /*}}}*/
+/*{{{*/
+static void init_scene_GLES1()
+{
+  const GLfloat light_pos[4] = {5.0, 5.0, 10.0, 1.0};
+
+
+  glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+  glEnable(GL_CULL_FACE);
+  glEnable(GL_LIGHTING);
+  glEnable(GL_LIGHT0);
+  glEnable(GL_DEPTH_TEST);
+
+  glShadeModel(GL_SMOOTH);
+
+  // vertex and normal array will always be used so do it here once
+  glEnableClientState(GL_NORMAL_ARRAY);
+  glEnableClientState(GL_VERTEX_ARRAY);
+
+  // setup overall texture environment
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+  glEnable(GL_TEXTURE_2D);
+  // setup blend mode for current bound texture unit
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+
+}
+/*}}}*/
+/*{{{*/
+void draw_gearGLES1 (gear_t* gear, GLfloat x, GLfloat y, GLfloat angle)
+{
+
+  glPushMatrix();
+  glTranslatef(x, y, 0.0);
+  glRotatef(angle, 0.0, 0.0, 1.0);
+
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, gear->color);
+
+  if (state->useVBO) {
+  glBindBuffer(GL_ARRAY_BUFFER, gear->vboId);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gear->iboId);
+  }
+
+  glNormalPointer(GL_FLOAT, sizeof(vertex_t), gear->normal_p);
+  glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), gear->vertex_p);
+  glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t), gear->texCoords_p);
+
+  // Bind texture surface to current vertices
+  glBindTexture(GL_TEXTURE_2D, state->texId);
+
+  glDrawElements(state->drawMode, gear->tricount, GL_UNSIGNED_SHORT,
+                   gear->index_p);
+  glPopMatrix();
+
+}
+/*}}}*/
+/*{{{*/
+static void draw_sceneGLES1()
+{
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glPushMatrix();
+
+    glTranslatef(0.9, 0.0, -state->viewDist);
+
+    glRotatef(view_rotx, 1.0, 0.0, 0.0);
+    glRotatef(view_roty, 0.0, 1.0, 0.0);
+    glRotatef(view_rotz, 0.0, 0.0, 1.0);
+
+    draw_gearGLES1(state->gear1, -3.0, -2.0, state->angle);
+    draw_gearGLES1(state->gear2, 3.1, -2.0, -2.0 * state->angle - 9.0);
+    draw_gearGLES1(state->gear3, -3.1, 4.2, -2.0 * state->angle - 25.0);
+
+  glPopMatrix();
+}
+/*}}}*/
 
 /*{{{*/
-static void init_scene_GLES2(void)
+static void init_model_projGLES2()
+{
+   /* Update the projection matrix */
+   m4x4_perspective(state->ProjectionMatrix, 45.0, (float)state->screen_width / (float)state->screen_height, 1.0, 50.0);
+   glViewport(0, 0, (GLsizei)state->screen_width, (GLsizei)state->screen_height);
+
+}
+/*}}}*/
+/*{{{*/
+static void init_scene_GLES2()
 {
    GLuint v, f, program;
    const char *p;
@@ -604,53 +698,7 @@ static void init_scene_GLES2(void)
 }
 /*}}}*/
 /*{{{*/
-static void init_scene_GLES1()
-{
-  const GLfloat light_pos[4] = {5.0, 5.0, 10.0, 1.0};
-
-
-  glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-  glEnable(GL_CULL_FACE);
-  glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
-  glEnable(GL_DEPTH_TEST);
-
-  glShadeModel(GL_SMOOTH);
-
-  // vertex and normal array will always be used so do it here once
-  glEnableClientState(GL_NORMAL_ARRAY);
-  glEnableClientState(GL_VERTEX_ARRAY);
-
-  // setup overall texture environment
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-  glEnable(GL_TEXTURE_2D);
-  // setup blend mode for current bound texture unit
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-
-}
-/*}}}*/
-
-/*{{{*/
-static void update_angleFrame(void)
-{
-  state->angleFrame = state->angleVel / state->avgfps;
-}
-
-/*}}}*/
-/*{{{*/
-static void update_gear_rotation(void)
-{
-    /* advance gear rotation for next frame */
-    state->angle += state->angleFrame;
-    if (state->angle > 360.0)
-      state->angle -= 360.0;
-}
-/*}}}*/
-
-/*{{{*/
-static void draw_gearGLES2(gear_t *gear, GLfloat *transform,
+static void draw_gearGLES2 (gear_t *gear, GLfloat *transform,
       GLfloat x, GLfloat y, GLfloat angle)
 {
    // The direction of the directional light for the scene */
@@ -725,7 +773,7 @@ static void draw_gearGLES2(gear_t *gear, GLfloat *transform,
 }
 /*}}}*/
 /*{{{*/
-static void draw_sceneGLES2(void)
+static void draw_sceneGLES2()
 {
    GLfloat transform[16];
    m4x4_identity(transform);
@@ -744,56 +792,9 @@ static void draw_sceneGLES2(void)
    draw_gearGLES2(state->gear3, transform, -3.1, 4.2, -2 * state->angle - 25.0);
 }
 /*}}}*/
+
 /*{{{*/
-void draw_gearGLES1(gear_t* gear, GLfloat x, GLfloat y, GLfloat angle)
-{
-
-  glPushMatrix();
-  glTranslatef(x, y, 0.0);
-  glRotatef(angle, 0.0, 0.0, 1.0);
-
-  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, gear->color);
-
-  if (state->useVBO) {
-  glBindBuffer(GL_ARRAY_BUFFER, gear->vboId);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gear->iboId);
-  }
-
-  glNormalPointer(GL_FLOAT, sizeof(vertex_t), gear->normal_p);
-  glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), gear->vertex_p);
-  glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t), gear->texCoords_p);
-
-  // Bind texture surface to current vertices
-  glBindTexture(GL_TEXTURE_2D, state->texId);
-
-  glDrawElements(state->drawMode, gear->tricount, GL_UNSIGNED_SHORT,
-                   gear->index_p);
-  glPopMatrix();
-
-}
-/*}}}*/
-/*{{{*/
-static void draw_sceneGLES1(void)
-{
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  glPushMatrix();
-
-    glTranslatef(0.9, 0.0, -state->viewDist);
-
-    glRotatef(view_rotx, 1.0, 0.0, 0.0);
-    glRotatef(view_roty, 0.0, 1.0, 0.0);
-    glRotatef(view_rotz, 0.0, 0.0, 1.0);
-
-    draw_gearGLES1(state->gear1, -3.0, -2.0, state->angle);
-    draw_gearGLES1(state->gear2, 3.1, -2.0, -2.0 * state->angle - 9.0);
-    draw_gearGLES1(state->gear3, -3.1, 4.2, -2.0 * state->angle - 25.0);
-
-  glPopMatrix();
-}
-/*}}}*/
-/*{{{*/
-static void make_gear_vbo(gear_t *gear)
+static void make_gear_vbo (gear_t *gear)
 {
    // setup the vertex buffer that will hold the vertices and normals
    glGenBuffers(1, &gear->vboId);
@@ -871,7 +872,7 @@ static void run_gears()
     // swap the current buffer for the next new frame
     eglSwapBuffers(state->display, state->surface);
 
-    if (dt >= 5.0f)
+    if (dt >= 1.0f)
     {
       fps = (float)frames  / dt;
       printf("%d frames in %3.1f seconds = %3.1f FPS\n", frames, dt, fps);
@@ -890,7 +891,7 @@ static void run_gears()
 }
 /*}}}*/
 /*{{{*/
-static void free_gear(gear_t *gear)
+static void free_gear (gear_t *gear)
 {
    if (gear) {
    if (gear->vboId) {
@@ -907,7 +908,7 @@ static void free_gear(gear_t *gear)
 /*}}}*/
 
 /*{{{*/
-static void init_egl(void)
+static void init_egl()
 {
    int32_t success = 0;
    EGLBoolean result;
@@ -1006,17 +1007,14 @@ static void init_egl(void)
    glEnable(GL_CULL_FACE);
    glFrontFace(GL_CCW);
 
-   if (state->wantInfo) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
       printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
       printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
       printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
-
-   }
 }
 /*}}}*/
 /*{{{*/
-static void exit_func(void)
+static void exit_func()
 // Function to be passed to atexit().
 {
    if (!state->useGLES2) {
@@ -1048,7 +1046,7 @@ static void exit_func(void)
 /*}}}*/
 
 /*{{{*/
-static void setup_user_options(int argc, char *argv[])
+static void setup_user_options (int argc, char *argv[])
 {
   int i = 0;
 
