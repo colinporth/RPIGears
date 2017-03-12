@@ -85,7 +85,25 @@ typedef struct {
   } CUBE_STATE_T;
 //}}}
 
- const GLfloat LightSourcePosition[4] = { 5.0, 5.0, 10.0, 1.0};
+//{{{
+const EGLint attribute_list[] = {
+  EGL_RED_SIZE,   8,
+  EGL_GREEN_SIZE, 8,
+  EGL_BLUE_SIZE,  8,
+  EGL_ALPHA_SIZE, 8,
+  EGL_DEPTH_SIZE, 16,
+  EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+  EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+  EGL_NONE
+  };
+//}}}
+//{{{
+EGLint context_attributes[] = {
+  EGL_CONTEXT_CLIENT_VERSION, 2,
+  EGL_NONE
+  };
+//}}}
+
 //{{{
 const char vertex_shader[] =
   "attribute vec3 position;"
@@ -132,6 +150,8 @@ const char fragment_shader[] =
     "gl_FragColor += pow(max(0.0, dot(n, h)), 7.0) * diffCol.r;"
     "}";
 //}}}
+const GLfloat LightSourcePosition[4] = { 5.0, 5.0, 10.0, 1.0};
+
 CUBE_STATE_T _state;
 CUBE_STATE_T* state = &_state;
 EGL_DISPMANX_WINDOW_T nativewindow;
@@ -752,28 +772,11 @@ void init_egl() {
   assert (state->display != EGL_NO_DISPLAY);
   assert (eglInitialize (state->display, NULL, NULL) != GL_FALSE);
 
-  //{{{
-  const EGLint attribute_list[] = {
-    EGL_RED_SIZE,   8,
-    EGL_GREEN_SIZE, 8,
-    EGL_BLUE_SIZE,  8,
-    EGL_ALPHA_SIZE, 8,
-    EGL_DEPTH_SIZE, 16,
-    EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-    EGL_NONE
-    };
-  //}}}
   EGLConfig config;
   EGLint num_config;
   assert (eglChooseConfig (state->display, attribute_list, &config, 1, &num_config) != GL_FALSE);
   assert (eglBindAPI (EGL_OPENGL_ES_API) != EGL_FALSE);
 
-  //{{{
-  EGLint context_attributes[] = {
-    EGL_CONTEXT_CLIENT_VERSION, 2,
-    EGL_NONE
-    };
-  //}}}
   state->context = eglCreateContext (state->display, config, EGL_NO_CONTEXT, context_attributes);
   assert (state->context!=EGL_NO_CONTEXT);
 
