@@ -85,76 +85,57 @@ typedef struct {
   } CUBE_STATE_T;
 //}}}
 
-static const GLfloat LightSourcePosition[4] = { 5.0, 5.0, 10.0, 1.0};
+ const GLfloat LightSourcePosition[4] = { 5.0, 5.0, 10.0, 1.0};
 //{{{
-// vertex shader for gles2
-static const char vertex_shader[] =
-  "attribute vec3 position;\n"
-  "attribute vec3 normal;\n"
-  "attribute vec2 uv;\n"
-  "\n"
-  "uniform mat4 ModelViewMatrix;\n"
-  "uniform mat4 ModelViewProjectionMatrix;\n"
-  "uniform mat4 NormalMatrix;\n"
-  "// light position in view space\n"
-  "uniform vec4 LightSourcePosition;\n"
-  "\n"
-  "varying lowp vec3 L;\n"
-  "varying lowp vec3 N;\n"
-  "varying lowp vec3 H;\n"
-  "varying lowp vec2 oUV;\n"
-  "\n"
-  "void main(void)\n"
-  "{\n"
-  "    vec4 pos = vec4(position, 1.0);\n"
-  "   // None of the vectors are normalized until in the fragment shader\n"
-  "// Calculate the normal vector for this vertex, in view space (\n"
-  "// multiply by NormalMatrix)\n"
-  "    N = vec3(NormalMatrix * vec4(normal, 0.0));\n"
-  "    // Calculate the light vector for this vertex\n"
-  "    L = vec3(LightSourcePosition - (ModelViewMatrix * pos));\n"
-  "    // Calculate the view vector\n"
-  "    lowp vec3 V = vec3(ModelViewMatrix * pos);\n"
-  "// calculate half angle\n"
-  "    H = L - V;\n"
-  "\n"
-  "    oUV = uv;\n"
-  "    // Transform the position to clip coordinates\n"
-  "    gl_Position = ModelViewProjectionMatrix * pos;\n"
-  "}";
+const char vertex_shader[] =
+  "attribute vec3 position;"
+  "attribute vec3 normal;"
+  "attribute vec2 uv;"
+
+  "uniform mat4 ModelViewMatrix;"
+  "uniform mat4 ModelViewProjectionMatrix;"
+  "uniform mat4 NormalMatrix;"
+  "uniform vec4 LightSourcePosition;"
+
+  "varying lowp vec3 L;"
+  "varying lowp vec3 N;"
+  "varying lowp vec3 H;"
+  "varying lowp vec2 oUV;"
+
+  "void main() {"
+    "vec4 pos = vec4(position, 1.0);"
+    "N = vec3(NormalMatrix * vec4(normal, 0.0));"
+    "L = vec3(LightSourcePosition - (ModelViewMatrix * pos));"
+    "lowp vec3 V = vec3(ModelViewMatrix * pos);"
+    "H = L - V;"
+    "oUV = uv;"
+    "gl_Position = ModelViewProjectionMatrix * pos;"
+    "}";
 //}}}
 //{{{
-// fragment shader for gles2
-static const char fragment_shader[] =
-  "\n"
-  "uniform vec4 MaterialColor;\n"
-  "uniform sampler2D DiffuseMap;\n"
-  "\n"
-  "varying lowp vec3 L;\n"
-  "varying lowp vec3 N;\n"
-  "varying lowp vec3 H;\n"
-  "varying lowp vec2 oUV;\n"
-  "\n"
-  "void main(void)\n"
-  "{\n"
-  "    lowp vec3 l = normalize(L);\n"
-  "    lowp vec3 n = normalize(N);\n"
-  "    lowp vec3 h = normalize(H);\n"
-  "\n"
-  "    lowp float diffuse = max(dot(l, n), 0.0);\n"
-  "    // get bump map vector, again expand from range-compressed\n"
-  "    vec4 diffCol = texture2D(DiffuseMap, oUV);\n"
-  "    // modulate diffuseMap with base material color\n"
-  "    gl_FragColor = vec4(MaterialColor.xyz * diffuse, 1.0) * diffCol;\n"
-  " //   add  specular\n"
-  "    // materials that have more red in them are shinnier\n"
-  "    gl_FragColor += pow(max(0.0, dot(n, h)), 7.0) * diffCol.r;\n"
-  "}";
+const char fragment_shader[] =
+  "uniform vec4 MaterialColor;"
+  "uniform sampler2D DiffuseMap;"
+
+  "varying lowp vec3 L;"
+  "varying lowp vec3 N;"
+  "varying lowp vec3 H;"
+  "varying lowp vec2 oUV;"
+
+  "void main() {"
+    "lowp vec3 l = normalize(L);"
+    "lowp vec3 n = normalize(N);"
+    "lowp vec3 h = normalize(H);"
+    "lowp float diffuse = max(dot(l, n), 0.0);"
+    "vec4 diffCol = texture2D(DiffuseMap, oUV);"
+    "gl_FragColor = vec4(MaterialColor.xyz * diffuse, 1.0) * diffCol;"
+    "gl_FragColor += pow(max(0.0, dot(n, h)), 7.0) * diffCol.r;"
+    "}";
 //}}}
-static CUBE_STATE_T _state;
-static CUBE_STATE_T* state = &_state;
-static EGL_DISPMANX_WINDOW_T nativewindow;
-static GLfloat view_rotx = 25.0, view_roty = 30.0, view_rotz = 0.0;
+CUBE_STATE_T _state;
+CUBE_STATE_T* state = &_state;
+EGL_DISPMANX_WINDOW_T nativewindow;
+GLfloat view_rotx = 25.0, view_roty = 30.0, view_rotz = 0.0;
 
 //{{{
 uint getMilliseconds() {
@@ -189,13 +170,13 @@ int _kbhit() {
 //}}}
 
 //{{{
-static void m4x4_copy (GLfloat* md, const GLfloat* ms)
+void m4x4_copy (GLfloat* md, const GLfloat* ms)
 {
    memcpy(md, ms, sizeof(GLfloat)*16);
 }
 //}}}
 //{{{
-static void m4x4_multiply( GLfloat* m, const GLfloat* n)
+void m4x4_multiply( GLfloat* m, const GLfloat* n)
 {
    GLfloat tmp[16];
    const GLfloat* row,* column;
@@ -214,7 +195,7 @@ static void m4x4_multiply( GLfloat* m, const GLfloat* n)
 }
 //}}}
 //{{{
-static void m4x4_rotate (GLfloat* m, GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
+void m4x4_rotate (GLfloat* m, GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
    float s, c;
 
@@ -234,7 +215,7 @@ static void m4x4_rotate (GLfloat* m, GLfloat angle, GLfloat x, GLfloat y, GLfloa
 
 //}}}
 //{{{
-static void m4x4_translate (GLfloat* m, GLfloat x, GLfloat y, GLfloat z)
+void m4x4_translate (GLfloat* m, GLfloat x, GLfloat y, GLfloat z)
 {
    GLfloat t[16] = { 1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  x, y, z, 1 };
 
@@ -242,7 +223,7 @@ static void m4x4_translate (GLfloat* m, GLfloat x, GLfloat y, GLfloat z)
 }
 //}}}
 //{{{
-static void m4x4_identity (GLfloat* m)
+void m4x4_identity (GLfloat* m)
 {
    static const GLfloat t[16] = {
       1.0, 0.0, 0.0, 0.0,
@@ -255,7 +236,7 @@ static void m4x4_identity (GLfloat* m)
 }
 //}}}
 //{{{
-static void m4x4_transpose (GLfloat* m)
+void m4x4_transpose (GLfloat* m)
 {
    const GLfloat t[16] = {
       m[0], m[4], m[8],  m[12],
@@ -267,7 +248,7 @@ static void m4x4_transpose (GLfloat* m)
 }
 //}}}
 //{{{
-static void m4x4_invert (GLfloat* m)
+void m4x4_invert (GLfloat* m)
 {
    GLfloat t[16];
    m4x4_identity(t);
@@ -317,7 +298,7 @@ void m4x4_perspective (GLfloat* m, GLfloat fovy, GLfloat aspect, GLfloat zNear, 
 //}}}
 
 //{{{
-static gear_t* gear (const GLfloat inner_radius, const GLfloat outer_radius,
+gear_t* gear (const GLfloat inner_radius, const GLfloat outer_radius,
                      const GLfloat width, const GLint teeth, const GLfloat tooth_depth, const GLfloat color[]) {
 
   GLint i, j;
@@ -496,7 +477,7 @@ static gear_t* gear (const GLfloat inner_radius, const GLfloat outer_radius,
 }
 //}}}
 //{{{
-static void init_textures() {
+void init_textures() {
 
   // load a texture buffer but use them on six OGL|ES texture surfaces
   glGenTextures(1, &state->texId);
@@ -512,40 +493,38 @@ static void init_textures() {
 //}}}
 
 //{{{
-static void init_model_projGLES2() {
+void init_model_projGLES2() {
 
-  m4x4_perspective(state->ProjectionMatrix, 45.0, (float)state->screen_width / (float)state->screen_height, 1.0, 50.0);
-  glViewport(0, 0, (GLsizei)state->screen_width, (GLsizei)state->screen_height);
+  m4x4_perspective (state->ProjectionMatrix, 45.0, (float)state->screen_width / (float)state->screen_height, 1.0, 50.0);
+  glViewport (0, 0, (GLsizei)state->screen_width, (GLsizei)state->screen_height);
   }
 //}}}
 //{{{
-static void init_scene_GLES2() {
+void init_scene_GLES2() {
 
-  GLuint v, f, program;
-  const char *p;
-  char msg[512];
+  glEnable (GL_CULL_FACE);
+  glEnable (GL_DEPTH_TEST);
 
-  glEnable(GL_CULL_FACE);
-  glEnable(GL_DEPTH_TEST);
-
-  //Compile the vertex shader
-  p = vertex_shader;
-  v = glCreateShader (GL_VERTEX_SHADER);
+  // Compile the vertex shader
+  const char* p = vertex_shader;
+  GLuint v = glCreateShader (GL_VERTEX_SHADER);
   glShaderSource (v, 1, &p, NULL);
   glCompileShader (v);
+
+  char msg[512];
   glGetShaderInfoLog (v, sizeof msg, NULL, msg);
-  printf ("vertex shader info: %s\n", msg);
+  printf ("vertexShader log %s\n", msg);
 
   // Compile the fragment shader
   p = fragment_shader;
-  f = glCreateShader (GL_FRAGMENT_SHADER);
+  GLuint f = glCreateShader (GL_FRAGMENT_SHADER);
   glShaderSource (f, 1, &p, NULL);
   glCompileShader (f);
   glGetShaderInfoLog (f, sizeof msg, NULL, msg);
-  printf ("fragment shader info: %s\n", msg);
+  printf ("fragmentShader log %s\n", msg);
 
   // Create and link the shader program
-  program = glCreateProgram();
+  GLuint program = glCreateProgram();
   glAttachShader (program, v);
   glAttachShader (program, f);
   glBindAttribLocation (program, 0, "position");
@@ -554,7 +533,7 @@ static void init_scene_GLES2() {
 
   glLinkProgram (program);
   glGetProgramInfoLog (program, sizeof msg, NULL, msg);
-  printf ("info: %s\n", msg);
+  printf ("info log %s\n", msg);
 
   // Enable the shaders
   glUseProgram (program);
@@ -569,7 +548,7 @@ static void init_scene_GLES2() {
   }
 //}}}
 //{{{
-static void draw_gearGLES2 (gear_t* gear, GLfloat* transform, GLfloat x, GLfloat y, GLfloat angle) {
+void draw_gearGLES2 (gear_t* gear, GLfloat* transform, GLfloat x, GLfloat y, GLfloat angle) {
 
   GLfloat model_view[16];
   GLfloat normal_matrix[16];
@@ -629,7 +608,7 @@ static void draw_gearGLES2 (gear_t* gear, GLfloat* transform, GLfloat x, GLfloat
 }
 //}}}
 //{{{
-static void draw_sceneGLES2() {
+void draw_sceneGLES2() {
 
   GLfloat transform[16];
   m4x4_identity(transform);
@@ -650,7 +629,7 @@ static void draw_sceneGLES2() {
 //}}}
 
 //{{{
-static void make_gear_vbo (gear_t* gear) {
+void make_gear_vbo (gear_t* gear) {
 
   // setup the vertex buffer that will hold the vertices and normals
   glGenBuffers (1, &gear->vboId);
@@ -664,13 +643,13 @@ static void make_gear_vbo (gear_t* gear) {
   }
 //}}}
 //{{{
-static void build_gears() {
+void build_gears() {
 
-  const GLfloat red[4] = {0.9, 0.3, 0.3, 1.0};
+  const GLfloat red[4] =   {0.9, 0.3, 0.3, 1.0};
   const GLfloat green[4] = {0.3, 0.9, 0.3, 1.0};
-  const GLfloat blue[4] = {0.3, 0.3, 0.9, 1.0};
+  const GLfloat blue[4] =  {0.3, 0.3, 0.9, 1.0};
 
-  /* make the meshes for the gears */
+  // make the meshes for the gears
   state->gear1 = gear (1.0, 4.0, 2.5, 20, 0.7, red);
   state->gear2 = gear (0.5, 2.0, 3.0, 10, 0.7, green);
   state->gear3 = gear (1.3, 2.0, 1.5, 10, 0.7, blue);
@@ -684,7 +663,7 @@ static void build_gears() {
 }
 //}}}
 //{{{
-static void free_gear (gear_t* gear) {
+void free_gear (gear_t* gear) {
 
   if (gear) {
     if (gear->vboId)
@@ -701,14 +680,14 @@ static void free_gear (gear_t* gear) {
 //}}}
 
 //{{{
-static void update_angleFrame()
+void update_angleFrame()
 {
   state->angleFrame = state->angleVel / state->avgfps;
 }
 
 //}}}
 //{{{
-static void update_gear_rotation()
+void update_gear_rotation()
 {
     /* advance gear rotation for next frame */
     state->angle += state->angleFrame;
@@ -717,7 +696,7 @@ static void update_gear_rotation()
 }
 //}}}
 //{{{
-static void run_gears() {
+void run_gears() {
 
   const uint ttr = state->timeToRun;
   const uint st = getMilliseconds();
@@ -767,87 +746,59 @@ static void run_gears() {
 //}}}
 
 //{{{
-static void init_egl() {
+void init_egl() {
 
-  DISPMANX_ELEMENT_HANDLE_T dispman_element;
-  DISPMANX_DISPLAY_HANDLE_T dispman_display;
-  DISPMANX_UPDATE_HANDLE_T dispman_update;
-
-  // get an EGL display connection
   state->display = eglGetDisplay (EGL_DEFAULT_DISPLAY);
   assert (state->display != EGL_NO_DISPLAY);
+  assert (eglInitialize (state->display, NULL, NULL) != GL_FALSE);
 
-  // initialize the EGL display connection
-  EGLBoolean result = eglInitialize (state->display, NULL, NULL);
-  assert (EGL_FALSE != result);
-
-  // get an appropriate EGL frame buffer configuration
   //{{{
   const EGLint attribute_list[] = {
-     EGL_RED_SIZE, 8,
-     EGL_GREEN_SIZE, 8,
-     EGL_BLUE_SIZE, 8,
-     EGL_ALPHA_SIZE, 8,
-     EGL_DEPTH_SIZE, 16,
-     EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-     EGL_NONE
-  };
+    EGL_RED_SIZE,   8,
+    EGL_GREEN_SIZE, 8,
+    EGL_BLUE_SIZE,  8,
+    EGL_ALPHA_SIZE, 8,
+    EGL_DEPTH_SIZE, 16,
+    EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+    EGL_NONE
+    };
   //}}}
   EGLConfig config;
   EGLint num_config;
-  result = eglChooseConfig (state->display, attribute_list, &config, 1, &num_config);
-  assert (EGL_FALSE != result);
-  printf ("eglChooseConfig %d\n", num_config);
+  assert (eglChooseConfig (state->display, attribute_list, &config, 1, &num_config) != GL_FALSE);
+  assert (eglBindAPI (EGL_OPENGL_ES_API) != EGL_FALSE);
 
-  // bind the gles api to this thread - this is default so not required
-  result = eglBindAPI (EGL_OPENGL_ES_API);
-  assert (EGL_FALSE != result);
-
-  // create an EGL rendering context
   //{{{
   EGLint context_attributes[] = {
-     EGL_CONTEXT_CLIENT_VERSION, 2,
-     EGL_NONE
-  };
+    EGL_CONTEXT_CLIENT_VERSION, 2,
+    EGL_NONE
+    };
   //}}}
   state->context = eglCreateContext (state->display, config, EGL_NO_CONTEXT, context_attributes);
   assert (state->context!=EGL_NO_CONTEXT);
 
   // create an EGL window surface
-  int32_t success = graphics_get_display_size (0, &state->screen_width, &state->screen_height);
-  assert( success >= 0 );
+  assert (graphics_get_display_size (0, &state->screen_width, &state->screen_height) >= 0);
 
-  VC_RECT_T dst_rect;
-  dst_rect.x = 0;
-  dst_rect.y = 0;
-  dst_rect.width = state->screen_width;
-  dst_rect.height = state->screen_height;
-
-  VC_RECT_T src_rect;
-  src_rect.x = 0;
-  src_rect.y = 0;
-  src_rect.width = state->screen_width << 16;
-  src_rect.height = state->screen_height << 16;
-
-  dispman_display = vc_dispmanx_display_open (0);
-  dispman_update = vc_dispmanx_update_start (0);
-
-  //VC_DISPMANX_ALPHA_T kAlpha = { DISPMANX_FLAGS_ALPHA_FROM_SOURCE, 200, 0 };
-  VC_DISPMANX_ALPHA_T kAlpha = { DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS, 210, 0 };
-  dispman_element = vc_dispmanx_element_add (dispman_update, dispman_display, 0, &dst_rect, 0, &src_rect,
-                                             DISPMANX_PROTECTION_NONE, &kAlpha, NULL, DISPMANX_NO_ROTATE);
+  DISPMANX_DISPLAY_HANDLE_T dispmanxDisplay = vc_dispmanx_display_open (0);
+  DISPMANX_UPDATE_HANDLE_T dispmanxUpdate = vc_dispmanx_update_start (0);
+  VC_RECT_T dstRect = { 0, 0, (int)state->screen_width, (int)state->screen_height };
+  VC_RECT_T srcRect = { 0, 0, (int)state->screen_width << 16, (int)state->screen_height << 16 };
+  VC_DISPMANX_ALPHA_T kAlpha = { DISPMANX_FLAGS_ALPHA_FROM_SOURCE, 255, 0 }; // DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS
+  DISPMANX_ELEMENT_HANDLE_T dispman_element =
+    vc_dispmanx_element_add (dispmanxUpdate, dispmanxDisplay, 0, &dstRect, 0, &srcRect,
+                             DISPMANX_PROTECTION_NONE, &kAlpha, NULL, DISPMANX_NO_ROTATE);
   nativewindow.element = dispman_element;
   nativewindow.width = state->screen_width;
   nativewindow.height = state->screen_height;
-  vc_dispmanx_update_submit_sync (dispman_update);
+  vc_dispmanx_update_submit_sync (dispmanxUpdate);
   state->surface = eglCreateWindowSurface (state->display, config, &nativewindow, NULL);
-
   assert (state->surface != EGL_NO_SURFACE);
   assert (eglMakeCurrent (state->display, state->surface, state->surface, state->context) != EGL_FALSE);
   assert (eglSwapInterval (state->display, state->useVSync) != EGL_FALSE);
 
   // Set background color and clear buffers
-  glClearColor (0.25f, 0.45f, 0.55f, 1.0f);
+  glClearColor (0, 0, 0, 0);
 
   // Enable back face culling.
   glEnable (GL_CULL_FACE);
@@ -859,36 +810,33 @@ static void init_egl() {
   printf ("GL_EXTENSIONS = %s\n", (char*)glGetString (GL_EXTENSIONS));
   }
 //}}}
-
 //{{{
-static void exit_func()
-// Function to be passed to atexit().
-{
-   glBindBuffer(GL_ARRAY_BUFFER, 0);
-   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+void exit_func() {
 
-   // clear screen
-   glClear( GL_COLOR_BUFFER_BIT );
-   eglSwapBuffers(state->display, state->surface);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-   // Release OpenGL resources
-   eglMakeCurrent( state->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
-   eglDestroySurface( state->display, state->surface );
-   eglDestroyContext( state->display, state->context );
-   eglTerminate( state->display );
+  // clear screen
+  glClear( GL_COLOR_BUFFER_BIT );
+  eglSwapBuffers(state->display, state->surface);
 
-   // release memory used for gear and associated vertex arrays
-   free_gear(state->gear1);
-   free_gear(state->gear2);
-   free_gear(state->gear3);
+  // Release OpenGL resources
+  eglMakeCurrent( state->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
+  eglDestroySurface( state->display, state->surface );
+  eglDestroyContext( state->display, state->context );
+  eglTerminate( state->display );
 
-   printf("\nRPIGears finished\n");
+  // release memory used for gear and associated vertex arrays
+  free_gear(state->gear1);
+  free_gear(state->gear2);
+  free_gear(state->gear3);
 
-} // exit_func()
+  printf("\nRPIGears finished\n");
+  }
 //}}}
 
 //{{{
-static void setup_user_options (int argc, char* argv[]) {
+void setup_user_options (int argc, char* argv[]) {
 
   // setup some default states
   state->viewDist = 18.0;
