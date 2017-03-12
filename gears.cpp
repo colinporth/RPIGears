@@ -85,55 +85,76 @@ typedef struct {
   } CUBE_STATE_T;
 //}}}
 
-const GLfloat LightSourcePosition[4] = { 5.0, 5.0, 10.0, 1.0};
+static const GLfloat LightSourcePosition[4] = { 5.0, 5.0, 10.0, 1.0};
 //{{{
 // vertex shader for gles2
-const char vertex_shader[] =
+static const char vertex_shader[] =
   "attribute vec3 position;\n"
   "attribute vec3 normal;\n"
   "attribute vec2 uv;\n"
+  "\n"
   "uniform mat4 ModelViewMatrix;\n"
   "uniform mat4 ModelViewProjectionMatrix;\n"
   "uniform mat4 NormalMatrix;\n"
+  "// light position in view space\n"
   "uniform vec4 LightSourcePosition;\n"
+  "\n"
   "varying lowp vec3 L;\n"
   "varying lowp vec3 N;\n"
   "varying lowp vec3 H;\n"
   "varying lowp vec2 oUV;\n"
+  "\n"
   "void main(void)\n"
+  "{\n"
   "    vec4 pos = vec4(position, 1.0);\n"
+  "   // None of the vectors are normalized until in the fragment shader\n"
+  "// Calculate the normal vector for this vertex, in view space (\n"
+  "// multiply by NormalMatrix)\n"
   "    N = vec3(NormalMatrix * vec4(normal, 0.0));\n"
+  "    // Calculate the light vector for this vertex\n"
   "    L = vec3(LightSourcePosition - (ModelViewMatrix * pos));\n"
+  "    // Calculate the view vector\n"
   "    lowp vec3 V = vec3(ModelViewMatrix * pos);\n"
+  "// calculate half angle\n"
   "    H = L - V;\n"
+  "\n"
   "    oUV = uv;\n"
+  "    // Transform the position to clip coordinates\n"
   "    gl_Position = ModelViewProjectionMatrix * pos;\n"
   "}";
 //}}}
 //{{{
 // fragment shader for gles2
-const char fragment_shader[] =
+static const char fragment_shader[] =
+  "\n"
   "uniform vec4 MaterialColor;\n"
   "uniform sampler2D DiffuseMap;\n"
+  "\n"
   "varying lowp vec3 L;\n"
   "varying lowp vec3 N;\n"
   "varying lowp vec3 H;\n"
   "varying lowp vec2 oUV;\n"
+  "\n"
   "void main(void)\n"
+  "{\n"
   "    lowp vec3 l = normalize(L);\n"
   "    lowp vec3 n = normalize(N);\n"
   "    lowp vec3 h = normalize(H);\n"
+  "\n"
   "    lowp float diffuse = max(dot(l, n), 0.0);\n"
+  "    // get bump map vector, again expand from range-compressed\n"
   "    vec4 diffCol = texture2D(DiffuseMap, oUV);\n"
+  "    // modulate diffuseMap with base material color\n"
   "    gl_FragColor = vec4(MaterialColor.xyz * diffuse, 1.0) * diffCol;\n"
+  " //   add  specular\n"
+  "    // materials that have more red in them are shinnier\n"
   "    gl_FragColor += pow(max(0.0, dot(n, h)), 7.0) * diffCol.r;\n"
   "}";
 //}}}
-
-CUBE_STATE_T _state;
-CUBE_STATE_T* state = &_state;
-EGL_DISPMANX_WINDOW_T nativewindow;
-GLfloat view_rotx = 25.0, view_roty = 30.0, view_rotz = 0.0;
+static CUBE_STATE_T _state;
+static CUBE_STATE_T* state = &_state;
+static EGL_DISPMANX_WINDOW_T nativewindow;
+static GLfloat view_rotx = 25.0, view_roty = 30.0, view_rotz = 0.0;
 
 //{{{
 uint getMilliseconds() {
@@ -168,13 +189,13 @@ int _kbhit() {
 //}}}
 
 //{{{
-void m4x4_copy (GLfloat* md, const GLfloat* ms)
+static void m4x4_copy (GLfloat* md, const GLfloat* ms)
 {
    memcpy(md, ms, sizeof(GLfloat)*16);
 }
 //}}}
 //{{{
-void m4x4_multiply( GLfloat* m, const GLfloat* n)
+static void m4x4_multiply( GLfloat* m, const GLfloat* n)
 {
    GLfloat tmp[16];
    const GLfloat* row,* column;
@@ -193,7 +214,7 @@ void m4x4_multiply( GLfloat* m, const GLfloat* n)
 }
 //}}}
 //{{{
-void m4x4_rotate (GLfloat* m, GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
+static void m4x4_rotate (GLfloat* m, GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
    float s, c;
 
@@ -213,7 +234,7 @@ void m4x4_rotate (GLfloat* m, GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 
 //}}}
 //{{{
-void m4x4_translate (GLfloat* m, GLfloat x, GLfloat y, GLfloat z)
+static void m4x4_translate (GLfloat* m, GLfloat x, GLfloat y, GLfloat z)
 {
    GLfloat t[16] = { 1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  x, y, z, 1 };
 
@@ -221,9 +242,9 @@ void m4x4_translate (GLfloat* m, GLfloat x, GLfloat y, GLfloat z)
 }
 //}}}
 //{{{
-void m4x4_identity (GLfloat* m)
+static void m4x4_identity (GLfloat* m)
 {
-   const GLfloat t[16] = {
+   static const GLfloat t[16] = {
       1.0, 0.0, 0.0, 0.0,
       0.0, 1.0, 0.0, 0.0,
       0.0, 0.0, 1.0, 0.0,
@@ -234,7 +255,7 @@ void m4x4_identity (GLfloat* m)
 }
 //}}}
 //{{{
-void m4x4_transpose (GLfloat* m)
+static void m4x4_transpose (GLfloat* m)
 {
    const GLfloat t[16] = {
       m[0], m[4], m[8],  m[12],
@@ -246,57 +267,58 @@ void m4x4_transpose (GLfloat* m)
 }
 //}}}
 //{{{
-void m4x4_invert (GLfloat* m) {
+static void m4x4_invert (GLfloat* m)
+{
+   GLfloat t[16];
+   m4x4_identity(t);
 
-  GLfloat t[16];
-  m4x4_identity(t);
+   // Extract and invert the translation part 't'. The inverse of a
+   // translation matrix can be calculated by negating the translation
+   // coordinates.
+   t[12] = -m[12]; t[13] = -m[13]; t[14] = -m[14];
 
-  // Extract and invert the translation part 't'. The inverse of a
-  // translation matrix can be calculated by negating the translation
-  // coordinates.
-  t[12] = -m[12]; t[13] = -m[13]; t[14] = -m[14];
+   // Invert the rotation part 'r'. The inverse of a rotation matrix is
+   // equal to its transpose.
+   m[12] = m[13] = m[14] = 0;
+   m4x4_transpose(m);
 
-  // Invert the rotation part 'r'. The inverse of a rotation matrix is
-  // equal to its transpose.
-  m[12] = m[13] = m[14] = 0;
-  m4x4_transpose(m);
-
-  // inv(m) = inv(r) * inv(t)
-  m4x4_multiply(m, t);
-  }
+   // inv(m) = inv(r) * inv(t)
+   m4x4_multiply(m, t);
+}
 //}}}
 //{{{
-void m4x4_perspective (GLfloat* m, GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar) {
 
-  GLfloat tmp[16];
-  m4x4_identity(tmp);
+void m4x4_perspective (GLfloat* m, GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar)
+{
+   GLfloat tmp[16];
+   m4x4_identity(tmp);
 
-  float sine, cosine, cotangent, deltaZ;
-  GLfloat radians = fovy / 2.0 * M_PI / 180.0;
+   float sine, cosine, cotangent, deltaZ;
+   GLfloat radians = fovy / 2.0 * M_PI / 180.0;
 
-  deltaZ = zFar - zNear;
-  sine = sinf(radians);
-  cosine = cosf(radians);
+   deltaZ = zFar - zNear;
+   sine = sinf(radians);
+   cosine = cosf(radians);
 
-  if ((deltaZ == 0) || (sine == 0) || (aspect == 0))
-     return;
+   if ((deltaZ == 0) || (sine == 0) || (aspect == 0))
+      return;
 
-  cotangent = cosine / sine;
+   cotangent = cosine / sine;
 
-  tmp[0] = cotangent / aspect;
-  tmp[5] = cotangent;
-  tmp[10] = -(zFar + zNear) / deltaZ;
-  tmp[11] = -1;
-  tmp[14] = -2 * zNear * zFar / deltaZ;
-  tmp[15] = 0;
+   tmp[0] = cotangent / aspect;
+   tmp[5] = cotangent;
+   tmp[10] = -(zFar + zNear) / deltaZ;
+   tmp[11] = -1;
+   tmp[14] = -2 * zNear * zFar / deltaZ;
+   tmp[15] = 0;
 
-  m4x4_copy(m, tmp);
-  }
+   m4x4_copy(m, tmp);
+}
 //}}}
 
 //{{{
-gear_t* gear (const GLfloat inner_radius, const GLfloat outer_radius,
-              const GLfloat width, const GLint teeth, const GLfloat tooth_depth, const GLfloat color[]) {
+static gear_t* gear (const GLfloat inner_radius, const GLfloat outer_radius,
+                     const GLfloat width, const GLint teeth, const GLfloat tooth_depth, const GLfloat color[]) {
 
   GLint i, j;
   GLfloat r0, r1, r2;
@@ -325,12 +347,12 @@ gear_t* gear (const GLfloat inner_radius, const GLfloat outer_radius,
   tx = gear->vertices;
   ix = gear->indices;
 
-  #define VERTEX(x,y,z) ((vt->pos[0] = x),(vt->pos[1] = y),(vt->pos[2] = z), \
+#define VERTEX(x,y,z) ((vt->pos[0] = x),(vt->pos[1] = y),(vt->pos[2] = z), \
     (tx->texCoords[0] = x / r2 * 0.8 + 0.5),(tx->texCoords[1] = y / r2 * 0.8 + 0.5), (tx++), \
     (vt++ - gear->vertices))
-  #define NORMAL(x,y,z) ((nm->norm[0] = x),(nm->norm[1] = y),(nm->norm[2] = z), \
-                         (nm++))
-  #define INDEX(a,b,c) ((*ix++ = a),(*ix++ = b),(*ix++ = c))
+#define NORMAL(x,y,z) ((nm->norm[0] = x),(nm->norm[1] = y),(nm->norm[2] = z), \
+                       (nm++))
+#define INDEX(a,b,c) ((*ix++ = a),(*ix++ = b),(*ix++ = c))
 
   for (i = 0; i < teeth; i++) {
     ta = i * 2.0 * M_PI / teeth;
@@ -471,10 +493,10 @@ gear_t* gear (const GLfloat inner_radius, const GLfloat outer_radius,
 
   gear->tricount = gear->nindices / 3;
   return gear;
-  }
+}
 //}}}
 //{{{
-void init_textures() {
+static void init_textures() {
 
   // load a texture buffer but use them on six OGL|ES texture surfaces
   glGenTextures(1, &state->texId);
@@ -490,20 +512,21 @@ void init_textures() {
 //}}}
 
 //{{{
-void init_model_projGLES2() {
+static void init_model_projGLES2() {
+
   m4x4_perspective(state->ProjectionMatrix, 45.0, (float)state->screen_width / (float)state->screen_height, 1.0, 50.0);
   glViewport(0, 0, (GLsizei)state->screen_width, (GLsizei)state->screen_height);
   }
 //}}}
 //{{{
-void init_scene_GLES2() {
+static void init_scene_GLES2() {
 
   GLuint v, f, program;
   const char *p;
   char msg[512];
 
-  glEnable (GL_CULL_FACE);
-  glEnable (GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  glEnable(GL_DEPTH_TEST);
 
   //Compile the vertex shader
   p = vertex_shader;
@@ -546,7 +569,7 @@ void init_scene_GLES2() {
   }
 //}}}
 //{{{
-void draw_gearGLES2 (gear_t* gear, GLfloat* transform, GLfloat x, GLfloat y, GLfloat angle) {
+static void draw_gearGLES2 (gear_t* gear, GLfloat* transform, GLfloat x, GLfloat y, GLfloat angle) {
 
   GLfloat model_view[16];
   GLfloat normal_matrix[16];
@@ -603,14 +626,13 @@ void draw_gearGLES2 (gear_t* gear, GLfloat* transform, GLfloat x, GLfloat y, GLf
   glDisableVertexAttribArray (2);
   glDisableVertexAttribArray (1);
   glDisableVertexAttribArray (0);
-  }
+}
 //}}}
 //{{{
-void draw_sceneGLES2() {
+static void draw_sceneGLES2() {
 
   GLfloat transform[16];
   m4x4_identity(transform);
-
   /* Translate and rotate the view */
   m4x4_translate (transform, 0.9, 0.0, -state->viewDist);
   m4x4_rotate (transform, view_rotx, 1, 0, 0);
@@ -628,7 +650,7 @@ void draw_sceneGLES2() {
 //}}}
 
 //{{{
-void make_gear_vbo (gear_t* gear) {
+static void make_gear_vbo (gear_t* gear) {
 
   // setup the vertex buffer that will hold the vertices and normals
   glGenBuffers (1, &gear->vboId);
@@ -642,7 +664,7 @@ void make_gear_vbo (gear_t* gear) {
   }
 //}}}
 //{{{
-void build_gears() {
+static void build_gears() {
 
   const GLfloat red[4] = {0.9, 0.3, 0.3, 1.0};
   const GLfloat green[4] = {0.3, 0.9, 0.3, 1.0};
@@ -662,7 +684,7 @@ void build_gears() {
 }
 //}}}
 //{{{
-void free_gear (gear_t* gear) {
+static void free_gear (gear_t* gear) {
 
   if (gear) {
     if (gear->vboId)
@@ -674,25 +696,28 @@ void free_gear (gear_t* gear) {
     free (gear->indices);
     free (gear);
     }
+
   }
 //}}}
 
 //{{{
-void update_angleFrame() {
+static void update_angleFrame()
+{
   state->angleFrame = state->angleVel / state->avgfps;
-  }
-//}}}
-//{{{
-void update_gear_rotation() {
+}
 
-  /* advance gear rotation for next frame */
-  state->angle += state->angleFrame;
-  if (state->angle > 360.0)
-    state->angle -= 360.0;
-  }
 //}}}
 //{{{
-void run_gears() {
+static void update_gear_rotation()
+{
+    /* advance gear rotation for next frame */
+    state->angle += state->angleFrame;
+    if (state->angle > 360.0)
+      state->angle -= 360.0;
+}
+//}}}
+//{{{
+static void run_gears() {
 
   const uint ttr = state->timeToRun;
   const uint st = getMilliseconds();
@@ -736,13 +761,13 @@ void run_gears() {
         active = 0;
       else
         active = 30;
-      }
     }
   }
+}
 //}}}
 
 //{{{
-void init_egl() {
+static void init_egl() {
 
   DISPMANX_ELEMENT_HANDLE_T dispman_element;
   DISPMANX_DISPLAY_HANDLE_T dispman_display;
@@ -834,8 +859,9 @@ void init_egl() {
   printf ("GL_EXTENSIONS = %s\n", (char*)glGetString (GL_EXTENSIONS));
   }
 //}}}
+
 //{{{
-void exit_func()
+static void exit_func()
 // Function to be passed to atexit().
 {
    glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -860,8 +886,9 @@ void exit_func()
 
 } // exit_func()
 //}}}
+
 //{{{
-void setup_user_options (int argc, char* argv[]) {
+static void setup_user_options (int argc, char* argv[]) {
 
   // setup some default states
   state->viewDist = 18.0;
@@ -880,24 +907,27 @@ void setup_user_options (int argc, char* argv[]) {
 }
 //}}}
 //{{{
-int main (int argc, char* argv[]) {
+int main (int argc, char* argv[])
+{
+   bcm_host_init();
 
-  bcm_host_init();
+   // Clear application state
+   memset( state, 0, sizeof( *state ) );
+   setup_user_options(argc, argv);
 
-  memset( state, 0, sizeof( *state ) );
-  setup_user_options(argc, argv);
+   // Start OGLES
+   init_egl();
+   init_textures();
+   build_gears();
 
-  init_egl();
-  init_textures();
-  build_gears();
+   init_scene_GLES2();
+   init_model_projGLES2();
 
-  init_scene_GLES2();
-  init_model_projGLES2();
+   // animate the gears
+   run_gears();
 
-  run_gears();
+   exit_func();
 
-  exit_func();
-
-  return 0;
+   return 0;
   }
 //}}}
