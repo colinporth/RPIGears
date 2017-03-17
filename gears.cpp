@@ -625,13 +625,14 @@ void draw_gearGLES2 (gear_t* gear, GLfloat* transform, GLfloat x, GLfloat y, GLf
   glDisableVertexAttribArray (2);
   glDisableVertexAttribArray (1);
   glDisableVertexAttribArray (0);
-}
+  }
 //}}}
 //{{{
 void draw_sceneGLES2() {
 
   GLfloat transform[16];
-  m4x4_identity(transform);
+  m4x4_identity (transform);
+
   /* Translate and rotate the view */
   m4x4_translate (transform, 0.9, 0.0, -state->viewDist);
   m4x4_rotate (transform, view_rotx, 1, 0, 0);
